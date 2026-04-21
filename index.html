@@ -191,6 +191,7 @@
 
 
 				let graphElement = document.getElementById('finalGraph');
+				graphElement.style.display = '';
 				Plotly.purge(graphElement);
 
 				let startButton = document.getElementById('wrapper');
@@ -492,6 +493,7 @@
 				}
 			};
 			document.getElementById('wrapper').style.display = 'block';
+			document.getElementById('finalGraph').style.display = 'none';
 		}
 
 		function padRight(str, len) {
