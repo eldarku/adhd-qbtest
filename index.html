@@ -861,8 +861,10 @@
 			/*
 				(0) check whether we're already running face detection
 			*/
-			if(tracking_initialized)
-				return; // if yes, then do not initialize everything again
+			if(tracking_initialized) {
+				mycamvas.update(); // restart the animation loop
+				return;
+			}
 			/*
 				(1) initialize the pico.js face detector
 			*/
