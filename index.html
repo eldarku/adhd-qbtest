@@ -13,6 +13,36 @@
 	<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
 	<script type="text/javascript">
 		const OUTLIER_THRESHOLD = 2000;
+		const NORMATIVE = {
+			movementTime: {mean: 18, sd: 8},
+			distance: {mean: 3000, sd: 2000},
+			surfaceArea: {mean: 8000, sd: 5000},
+			microMovements: {mean: 3000, sd: 1500},
+			rtVariance: {mean: 100, sd: 55},
+			omission: {mean: 4, sd: 5},
+			reactionTime: {mean: 500, sd: 120},
+			normVariance: {mean: 22, sd: 10},
+			commission: {mean: 2, sd: 2},
+			errorRate: {mean: 5, sd: 3}
+		};
+		function normalCDF(x) {
+			var t = 1 / (1 + 0.2316419 * Math.abs(x));
+			var d = 0.3989422804014327;
+			var p = d * Math.exp(-x * x / 2) * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+			return x > 0 ? 1 - p : p;
+		}
+		function computeQScore(value, norm) {
+			if (norm.sd === 0) return {qscore: 0, percentile: 50};
+			var qs = (value - norm.mean) / norm.sd;
+			qs = Math.max(-3, Math.min(3, qs));
+			var pct = Math.round(normalCDF(qs) * 100);
+			return {qscore: parseFloat(qs.toFixed(1)), percentile: pct};
+		}
+		function renderQScoreBar(qscore) {
+			var pct = ((qscore + 3) / 6) * 100;
+			pct = Math.max(0, Math.min(100, pct));
+			return '<div class="qscore-bar"><div class="qscore-tick" style="left:50%"></div><div class="qscore-marker" style="left:' + pct + '%"></div></div>';
+		}
 		var redColor = '#ff0000';
 		var blueColor = '#0000ff';
 		var canvasSize = [200, 200];
@@ -63,6 +93,7 @@
 			events = [];
 			lastShape = undefined;
 			movementData = [];
+			prevCoords = undefined;
 		}
 
 		function clickEvent(evt) {
@@ -132,6 +163,12 @@
 				}
 			}
 			document.getElementById('canvas').style.display = 'block';
+			// Clear movement canvas
+			var mvCtx = document.getElementById('movement').getContext('2d');
+			mvCtx.clearRect(0, 0, 640, 480);
+			// Purge any existing plotly charts
+			var rtp = document.getElementById('reactionTimePlot');
+			if (rtp) Plotly.purge(rtp);
 			drawMovementGraphBackground();
 			startTracking();
 			let minutesField = document.getElementById("testLengthFieldMinutes");
@@ -251,9 +288,9 @@
 			};
 		}
 
-		function drawQuarterMovement(canvasId, points) {
+		function drawQuarterMovement(canvasId, points, globalBounds) {
 			var c = document.getElementById(canvasId);
-			if (!c || points.length < 2) return;
+			if (!c) return;
 			var qctx = c.getContext('2d');
 			var w = c.width, h = c.height;
 			qctx.clearRect(0, 0, w, h);
@@ -263,10 +300,17 @@
 			qctx.lineWidth = 0.5;
 			qctx.strokeStyle = '#ccc';
 			qctx.stroke();
-			var xs = [], ys = [];
-			for (var i = 0; i < points.length; i++) { xs.push(points[i].x); ys.push(points[i].y); }
-			var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
-			var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+			if (points.length < 2) return;
+			var minX, maxX, minY, maxY;
+			if (globalBounds) {
+				minX = globalBounds.minX; maxX = globalBounds.maxX;
+				minY = globalBounds.minY; maxY = globalBounds.maxY;
+			} else {
+				var xs = [], ys = [];
+				for (var i = 0; i < points.length; i++) { xs.push(points[i].x); ys.push(points[i].y); }
+				minX = Math.min.apply(null, xs); maxX = Math.max.apply(null, xs);
+				minY = Math.min.apply(null, ys); maxY = Math.max.apply(null, ys);
+			}
 			var rangeX = maxX - minX || 1, rangeY = maxY - minY || 1;
 			var margin = 10;
 			qctx.beginPath();
@@ -302,24 +346,96 @@
 				var totalStimuliQ = eventsQ.length;
 				var attStats = computeAttentionStats(correctQ.y, missedQ.y.length, totalStimuliQ, errorQ.y.length);
 				quarterStats.push({
-					quarter: q + 1,
-					movement: mvStats,
-					movementPoints: mvPoints,
-					attention: attStats,
-					correctCount: correctQ.y.length,
-					missedCount: missedQ.y.length,
-					errorCount: errorQ.y.length,
-					outlierCount: outlierQ.y.length,
-					totalStimuli: totalStimuliQ
+					quarter: q + 1, movement: mvStats, movementPoints: mvPoints, attention: attStats,
+					correctCount: correctQ.y.length, missedCount: missedQ.y.length,
+					errorCount: errorQ.y.length, outlierCount: outlierQ.y.length, totalStimuli: totalStimuliQ
 				});
 			}
-			// Draw movement canvases and labels
+			// Global bounds for movement canvases
+			var allMvPoints = [];
+			for (var q = 0; q < 4; q++) allMvPoints = allMvPoints.concat(quarterStats[q].movementPoints);
+			var globalBounds = null;
+			if (allMvPoints.length >= 2) {
+				var allXs = allMvPoints.map(function(p){return p.x;});
+				var allYs = allMvPoints.map(function(p){return p.y;});
+				globalBounds = {
+					minX: Math.min.apply(null, allXs), maxX: Math.max.apply(null, allXs),
+					minY: Math.min.apply(null, allYs), maxY: Math.max.apply(null, allYs)
+				};
+			}
 			for (var q = 0; q < 4; q++) {
-				drawQuarterMovement('movementQ' + (q+1), quarterStats[q].movementPoints);
+				drawQuarterMovement('movementQ' + (q+1), quarterStats[q].movementPoints, globalBounds);
 				document.getElementById('surfaceQ' + (q+1)).textContent = 'O = ' + quarterStats[q].movement.surfaceArea + ' px\u00B2';
 				document.getElementById('distanceQ' + (q+1)).textContent = 'A = ' + quarterStats[q].movement.distance + ' px';
 			}
-			// Build scatter plot with quarter markers
+			// Q2-Q4 aggregates
+			var q234mv = {distance: 0, surfaceArea: 0, microMovements: 0, movementTimeSum: 0};
+			for (var q = 1; q < 4; q++) {
+				q234mv.distance += quarterStats[q].movement.distance;
+				q234mv.surfaceArea += quarterStats[q].movement.surfaceArea;
+				q234mv.microMovements += quarterStats[q].movement.microMovements;
+				q234mv.movementTimeSum += parseFloat(quarterStats[q].movement.movementTime);
+			}
+			var avgMvTime = (q234mv.movementTimeSum / 3).toFixed(1);
+			var allCorrectRT_Q234 = [], totalMissed_Q234 = 0, totalErrors_Q234 = 0, totalStimuli_Q234 = 0;
+			for (var q = 1; q < 4; q++) {
+				var cq = filterByQuarter(delays.x, delays.y, q);
+				allCorrectRT_Q234 = allCorrectRT_Q234.concat(cq.y);
+				totalMissed_Q234 += quarterStats[q].missedCount;
+				totalErrors_Q234 += quarterStats[q].errorCount;
+				totalStimuli_Q234 += quarterStats[q].totalStimuli;
+			}
+			var overallAtt = computeAttentionStats(allCorrectRT_Q234, totalMissed_Q234, totalStimuli_Q234, totalErrors_Q234);
+			// Q-scores
+			var qsMvTime = computeQScore(parseFloat(avgMvTime), NORMATIVE.movementTime);
+			var qsDist = computeQScore(q234mv.distance, NORMATIVE.distance);
+			var qsSurf = computeQScore(q234mv.surfaceArea, NORMATIVE.surfaceArea);
+			var qsMicro = computeQScore(q234mv.microMovements, NORMATIVE.microMovements);
+			var qsRTVar = computeQScore(overallAtt.reactionTimeVar, NORMATIVE.rtVariance);
+			var qsOmission = computeQScore(parseFloat(overallAtt.omissionPct), NORMATIVE.omission);
+			var qsRT = computeQScore(overallAtt.reactionTime, NORMATIVE.reactionTime);
+			var qsNormVar = computeQScore(parseFloat(overallAtt.normVar), NORMATIVE.normVariance);
+			var qsCommission = computeQScore(parseFloat(overallAtt.commissionPct), NORMATIVE.commission);
+			var qsErrorRate = computeQScore(parseFloat(overallAtt.errorRate), NORMATIVE.errorRate);
+			// Composite Q-scores
+			var qbActivity = parseFloat(((qsMvTime.qscore + qsDist.qscore + qsSurf.qscore + qsMicro.qscore) / 4).toFixed(1));
+			var qbActivityPct = Math.round(normalCDF(qbActivity) * 100);
+			var qbInattention = parseFloat(((qsRTVar.qscore + qsOmission.qscore + qsRT.qscore + qsNormVar.qscore) / 4).toFixed(1));
+			var qbInattentionPct = Math.round(normalCDF(qbInattention) * 100);
+			var qbImpulsivity = parseFloat(((qsCommission.qscore + qsErrorRate.qscore) / 2).toFixed(1));
+			var qbImpulsivityPct = Math.round(normalCDF(qbImpulsivity) * 100);
+			// Render composite Q-score bars
+			function compositeBar(label, qs, pct) {
+				return '<div class="composite-row"><span class="composite-label">' + label + '</span>' +
+					'<div class="qscore-bar-wrapper"><span class="qscore-end-label">-3</span>' + renderQScoreBar(qs) + '<span class="qscore-end-label">+3</span></div>' +
+					'<span class="composite-value">Q-score: <b>' + qs + '</b></span>' +
+					'<span class="composite-value">Percentile: <b>' + pct + '</b></span></div>';
+			}
+			document.getElementById('qbActivityScore').innerHTML = compositeBar('QbActivity', qbActivity, qbActivityPct);
+			document.getElementById('qbInattentionScore').innerHTML = compositeBar('QbInattention', qbInattention, qbInattentionPct);
+			document.getElementById('qbImpulsivityScore').innerHTML = compositeBar('QbImpulsivity', qbImpulsivity, qbImpulsivityPct);
+			// Activity table with Q-scores
+			function qRow(label, value, qs) {
+				return '<tr><td>' + label + '</td><td>' + value + '</td><td>' + renderQScoreBar(qs.qscore) + '</td><td>' + qs.qscore + '</td><td>' + qs.percentile + '</td></tr>';
+			}
+			document.getElementById('activityTable').innerHTML =
+				'<tr><th>Metric</th><th>Result</th><th style="width:140px">-3 &nbsp;&nbsp; 0 &nbsp;&nbsp; +3</th><th>Q-score</th><th>Pctl</th></tr>' +
+				qRow('Movement time', avgMvTime + '%', qsMvTime) +
+				qRow('Distance', q234mv.distance + ' px', qsDist) +
+				qRow('Surface area', q234mv.surfaceArea + ' px\u00B2', qsSurf) +
+				qRow('Micro-movements', q234mv.microMovements, qsMicro);
+			// Attention & Impulse table with Q-scores
+			document.getElementById('attentionTable').innerHTML =
+				'<tr><th>Metric</th><th>Result</th><th style="width:140px">-3 &nbsp;&nbsp; 0 &nbsp;&nbsp; +3</th><th>Q-score</th><th>Pctl</th></tr>' +
+				'<tr><td colspan="5" style="background:#e8f5e9;font-weight:bold;font-size:12px">Attention</td></tr>' +
+				qRow('RT variance', overallAtt.reactionTimeVar + ' ms', qsRTVar) +
+				qRow('Omission', overallAtt.omissionPct + '%', qsOmission) +
+				qRow('Reaction time', overallAtt.reactionTime + ' ms', qsRT) +
+				qRow('Norm. variance', overallAtt.normVar + '%', qsNormVar) +
+				'<tr><td colspan="5" style="background:#fff3e0;font-weight:bold;font-size:12px">Impulse</td></tr>' +
+				qRow('Commission error', overallAtt.commissionPct + '%', qsCommission) +
+				qRow('Error rate', overallAtt.errorRate + '%', qsErrorRate);
+			// Scatter plot
 			function toMinutes(dateArr) {
 				return dateArr.map(function(d) { return (d.getTime() - startTime.getTime()) / 60000; });
 			}
@@ -347,45 +463,21 @@
 				shapes: shapes, annotations: annotations,
 				showlegend: true, legend: {orientation: 'h', y: -0.2}
 			}, {responsive: true});
-			// Activity table (Q2-Q4 aggregate)
-			var q234mv = {distance: 0, surfaceArea: 0, microMovements: 0, movementTimeSum: 0};
-			for (var q = 1; q < 4; q++) {
-				q234mv.distance += quarterStats[q].movement.distance;
-				q234mv.surfaceArea += quarterStats[q].movement.surfaceArea;
-				q234mv.microMovements += quarterStats[q].movement.microMovements;
-				q234mv.movementTimeSum += parseFloat(quarterStats[q].movement.movementTime);
-			}
-			var avgMvTime = (q234mv.movementTimeSum / 3).toFixed(1);
-			document.getElementById('activityTable').innerHTML =
-				'<tr><th>Metric</th><th>Q2-Q4</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr>' +
-				'<tr><td>Movement time</td><td>' + avgMvTime + '%</td>' + quarterStats.map(function(q){return '<td>'+q.movement.movementTime+'%</td>';}).join('') + '</tr>' +
-				'<tr><td>Distance</td><td>' + q234mv.distance + ' px</td>' + quarterStats.map(function(q){return '<td>'+q.movement.distance+' px</td>';}).join('') + '</tr>' +
-				'<tr><td>Surface area</td><td>' + q234mv.surfaceArea + ' px\u00B2</td>' + quarterStats.map(function(q){return '<td>'+q.movement.surfaceArea+' px\u00B2</td>';}).join('') + '</tr>' +
-				'<tr><td>Micro-movements</td><td>' + q234mv.microMovements + '</td>' + quarterStats.map(function(q){return '<td>'+q.movement.microMovements+'</td>';}).join('') + '</tr>';
-			// Attention & impulse table (Q2-Q4 aggregate)
-			var allCorrectRT_Q234 = [], totalMissed_Q234 = 0, totalErrors_Q234 = 0, totalStimuli_Q234 = 0;
-			for (var q = 1; q < 4; q++) {
-				var cq = filterByQuarter(delays.x, delays.y, q);
-				allCorrectRT_Q234 = allCorrectRT_Q234.concat(cq.y);
-				totalMissed_Q234 += quarterStats[q].missedCount;
-				totalErrors_Q234 += quarterStats[q].errorCount;
-				totalStimuli_Q234 += quarterStats[q].totalStimuli;
-			}
-			var overallAtt = computeAttentionStats(allCorrectRT_Q234, totalMissed_Q234, totalStimuli_Q234, totalErrors_Q234);
-			document.getElementById('attentionTable').innerHTML =
-				'<tr><th>Metric</th><th>Q2-Q4</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr>' +
-				'<tr><td>RT variance</td><td>' + overallAtt.reactionTimeVar + ' ms</td>' + quarterStats.map(function(q){return '<td>'+q.attention.reactionTimeVar+' ms</td>';}).join('') + '</tr>' +
-				'<tr><td>Omission</td><td>' + overallAtt.omissionPct + '%</td>' + quarterStats.map(function(q){return '<td>'+q.attention.omissionPct+'%</td>';}).join('') + '</tr>' +
-				'<tr><td>Reaction time</td><td>' + overallAtt.reactionTime + ' ms</td>' + quarterStats.map(function(q){return '<td>'+q.attention.reactionTime+' ms</td>';}).join('') + '</tr>' +
-				'<tr><td>Norm. variance</td><td>' + overallAtt.normVar + '%</td>' + quarterStats.map(function(q){return '<td>'+q.attention.normVar+'%</td>';}).join('') + '</tr>' +
-				'<tr><td>Commission error</td><td>' + overallAtt.commissionPct + '%</td>' + quarterStats.map(function(q){return '<td>'+q.attention.commissionPct+'%</td>';}).join('') + '</tr>' +
-				'<tr><td>Error rate</td><td>' + overallAtt.errorRate + '%</td>' + quarterStats.map(function(q){return '<td>'+q.attention.errorRate+'%</td>';}).join('') + '</tr>';
 			// Store for export
 			window._quarterStats = quarterStats;
 			window._overallAtt = overallAtt;
 			window._q234Movement = q234mv;
 			window._avgMovementTime = avgMvTime;
-			// Show start button
+			window._qscores = {
+				activity: {movementTime: qsMvTime, distance: qsDist, surfaceArea: qsSurf, microMovements: qsMicro},
+				attention: {rtVariance: qsRTVar, omission: qsOmission, reactionTime: qsRT, normVariance: qsNormVar},
+				impulse: {commission: qsCommission, errorRate: qsErrorRate},
+				composite: {
+					qbActivity: {qscore: qbActivity, percentile: qbActivityPct},
+					qbInattention: {qscore: qbInattention, percentile: qbInattentionPct},
+					qbImpulsivity: {qscore: qbImpulsivity, percentile: qbImpulsivityPct}
+				}
+			};
 			document.getElementById('wrapper').style.display = 'block';
 		}
 
@@ -398,6 +490,7 @@
 			var att = window._overallAtt;
 			var mv = window._q234Movement;
 			var mvTime = window._avgMovementTime;
+			var qsc = window._qscores;
 			var testDate = startTime.toLocaleDateString() + ' ' + startTime.toLocaleTimeString();
 			var testDuration = (timeLimit / 60000) + ' minutes';
 			var lines = [];
@@ -406,25 +499,33 @@
 			lines.push('Test date: ' + testDate);
 			lines.push('Test duration: ' + testDuration);
 			lines.push('');
-			lines.push('=== Activity Results ===');
+			lines.push('=== Composite Q-Scores (Q2-Q4) ===');
 			lines.push('');
-			lines.push(padRight('Metric', 20) + padRight('Q2-Q4', 12) + padRight('Q1', 12) + padRight('Q2', 12) + padRight('Q3', 12) + padRight('Q4', 12));
-			lines.push(Array(81).join('-'));
-			lines.push(padRight('Movement time', 20) + padRight(mvTime+'%', 12) + qs.map(function(q){return padRight(q.movement.movementTime+'%', 12);}).join(''));
-			lines.push(padRight('Distance', 20) + padRight(mv.distance+' px', 12) + qs.map(function(q){return padRight(q.movement.distance+' px', 12);}).join(''));
-			lines.push(padRight('Surface area', 20) + padRight(mv.surfaceArea+' px\u00B2', 12) + qs.map(function(q){return padRight(q.movement.surfaceArea+' px\u00B2', 12);}).join(''));
-			lines.push(padRight('Micro-movements', 20) + padRight(mv.microMovements+'', 12) + qs.map(function(q){return padRight(q.movement.microMovements+'', 12);}).join(''));
+			lines.push(padRight('QbActivity', 20) + 'Q-score: ' + qsc.composite.qbActivity.qscore + '  Percentile: ' + qsc.composite.qbActivity.percentile);
+			lines.push(padRight('QbInattention', 20) + 'Q-score: ' + qsc.composite.qbInattention.qscore + '  Percentile: ' + qsc.composite.qbInattention.percentile);
+			lines.push(padRight('QbImpulsivity', 20) + 'Q-score: ' + qsc.composite.qbImpulsivity.qscore + '  Percentile: ' + qsc.composite.qbImpulsivity.percentile);
 			lines.push('');
-			lines.push('=== Attention & Impulse Control Results ===');
+			lines.push('=== Activity Results (Q2-Q4) ===');
 			lines.push('');
-			lines.push(padRight('Metric', 20) + padRight('Q2-Q4', 12) + padRight('Q1', 12) + padRight('Q2', 12) + padRight('Q3', 12) + padRight('Q4', 12));
-			lines.push(Array(81).join('-'));
-			lines.push(padRight('RT variance', 20) + padRight(att.reactionTimeVar+' ms', 12) + qs.map(function(q){return padRight(q.attention.reactionTimeVar+' ms', 12);}).join(''));
-			lines.push(padRight('Omission', 20) + padRight(att.omissionPct+'%', 12) + qs.map(function(q){return padRight(q.attention.omissionPct+'%', 12);}).join(''));
-			lines.push(padRight('Reaction time', 20) + padRight(att.reactionTime+' ms', 12) + qs.map(function(q){return padRight(q.attention.reactionTime+' ms', 12);}).join(''));
-			lines.push(padRight('Norm. variance', 20) + padRight(att.normVar+'%', 12) + qs.map(function(q){return padRight(q.attention.normVar+'%', 12);}).join(''));
-			lines.push(padRight('Commission error', 20) + padRight(att.commissionPct+'%', 12) + qs.map(function(q){return padRight(q.attention.commissionPct+'%', 12);}).join(''));
-			lines.push(padRight('Error rate', 20) + padRight(att.errorRate+'%', 12) + qs.map(function(q){return padRight(q.attention.errorRate+'%', 12);}).join(''));
+			lines.push(padRight('Metric', 20) + padRight('Result', 14) + padRight('Q-score', 10) + padRight('Pctl', 8));
+			lines.push(Array(53).join('-'));
+			lines.push(padRight('Movement time', 20) + padRight(mvTime+'%', 14) + padRight(qsc.activity.movementTime.qscore+'', 10) + padRight(qsc.activity.movementTime.percentile+'', 8));
+			lines.push(padRight('Distance', 20) + padRight(mv.distance+' px', 14) + padRight(qsc.activity.distance.qscore+'', 10) + padRight(qsc.activity.distance.percentile+'', 8));
+			lines.push(padRight('Surface area', 20) + padRight(mv.surfaceArea+' px\u00B2', 14) + padRight(qsc.activity.surfaceArea.qscore+'', 10) + padRight(qsc.activity.surfaceArea.percentile+'', 8));
+			lines.push(padRight('Micro-movements', 20) + padRight(mv.microMovements+'', 14) + padRight(qsc.activity.microMovements.qscore+'', 10) + padRight(qsc.activity.microMovements.percentile+'', 8));
+			lines.push('');
+			lines.push('=== Attention & Impulse Results (Q2-Q4) ===');
+			lines.push('');
+			lines.push(padRight('Metric', 20) + padRight('Result', 14) + padRight('Q-score', 10) + padRight('Pctl', 8));
+			lines.push(Array(53).join('-'));
+			lines.push('-- Attention --');
+			lines.push(padRight('RT variance', 20) + padRight(att.reactionTimeVar+' ms', 14) + padRight(qsc.attention.rtVariance.qscore+'', 10) + padRight(qsc.attention.rtVariance.percentile+'', 8));
+			lines.push(padRight('Omission', 20) + padRight(att.omissionPct+'%', 14) + padRight(qsc.attention.omission.qscore+'', 10) + padRight(qsc.attention.omission.percentile+'', 8));
+			lines.push(padRight('Reaction time', 20) + padRight(att.reactionTime+' ms', 14) + padRight(qsc.attention.reactionTime.qscore+'', 10) + padRight(qsc.attention.reactionTime.percentile+'', 8));
+			lines.push(padRight('Norm. variance', 20) + padRight(att.normVar+'%', 14) + padRight(qsc.attention.normVariance.qscore+'', 10) + padRight(qsc.attention.normVariance.percentile+'', 8));
+			lines.push('-- Impulse --');
+			lines.push(padRight('Commission error', 20) + padRight(att.commissionPct+'%', 14) + padRight(qsc.impulse.commission.qscore+'', 10) + padRight(qsc.impulse.commission.percentile+'', 8));
+			lines.push(padRight('Error rate', 20) + padRight(att.errorRate+'%', 14) + padRight(qsc.impulse.errorRate.qscore+'', 10) + padRight(qsc.impulse.errorRate.percentile+'', 8));
 			lines.push('');
 			lines.push('=== Per-Quarter Summary ===');
 			lines.push('');
@@ -436,6 +537,7 @@
 				lines.push('  Commission errors: ' + qs[i].errorCount);
 				lines.push('  Outliers: ' + qs[i].outlierCount);
 				lines.push('  Reaction time: ' + qs[i].attention.reactionTime + ' ms');
+				lines.push('  RT variance: ' + qs[i].attention.reactionTimeVar + ' ms');
 				lines.push('  Distance: ' + qs[i].movement.distance + ' px');
 				lines.push('  Surface area: ' + qs[i].movement.surfaceArea + ' px\u00B2');
 				lines.push('');
@@ -446,6 +548,8 @@
 			lines.push('Total commission errors: ' + errorClicks);
 			lines.push('Total anticipatory: ' + anticipatoryClicks);
 			lines.push('Total clicks: ' + totalClicks);
+			lines.push('');
+			lines.push('Note: Q-scores use approximate normative values (not clinical-grade).');
 			var text = lines.join('\n');
 			var blob = new Blob([text], {type: 'text/plain'});
 			var url = URL.createObjectURL(blob);
@@ -822,6 +926,64 @@
 		#exportButton:hover {
 			background: linear-gradient(to bottom, #1b5e20 5%, #2e7d32 100%);
 		}
+		.qscore-bar {
+			width: 120px;
+			height: 14px;
+			position: relative;
+			display: inline-block;
+			vertical-align: middle;
+			border: 1px solid #999;
+			background: linear-gradient(to right,
+				#c8e6c9 0%, #c8e6c9 33.3%,
+				#fff9c4 33.3%, #fff9c4 66.7%,
+				#ffcdd2 66.7%, #ffcdd2 100%);
+		}
+		.qscore-marker {
+			position: absolute;
+			top: -3px;
+			width: 0;
+			height: 0;
+			border-left: 5px solid transparent;
+			border-right: 5px solid transparent;
+			border-top: 7px solid #d32f2f;
+			transform: translateX(-5px);
+		}
+		.qscore-tick {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			width: 1px;
+			background: #666;
+			transform: translateX(-0.5px);
+		}
+		.composite-row {
+			display: flex;
+			align-items: center;
+			gap: 15px;
+			padding: 8px 0;
+			border-bottom: 1px solid #ddd;
+		}
+		.composite-label {
+			font-weight: bold;
+			min-width: 130px;
+		}
+		.composite-value {
+			font-size: 14px;
+		}
+		.qscore-bar-wrapper {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+		}
+		.qscore-end-label {
+			font-size: 11px;
+			color: #666;
+		}
+		.note {
+			font-size: 11px;
+			color: #888;
+			margin-top: 5px;
+		}
 
 	</style>
   </head>
@@ -843,6 +1005,7 @@
 		<p><center><canvas id="movement" width=640 height=480></canvas></center></p>
 		<div id="results" style="display:none;">
 			<h2>Activity</h2>
+			<div id="qbActivityScore"></div>
 			<div class="quarter-row">
 				<div class="quarter-panel">
 					<canvas id="movementQ1" width="150" height="150"></canvas>
@@ -872,6 +1035,8 @@
 				<div class="quarter-panel"><div id="distanceQ4" class="stat-label">A = 0 px</div></div>
 			</div>
 			<h2>Attention &amp; Impulse Control</h2>
+			<div id="qbInattentionScore"></div>
+			<div id="qbImpulsivityScore"></div>
 			<div id="reactionTimePlot" style="width:100%;height:350px;"></div>
 			<div class="tables-row">
 				<div class="table-panel">
@@ -886,6 +1051,7 @@
 			<div class="center" style="margin-top:20px;">
 				<button id="exportButton" onclick="exportResults()">Export as Text</button>
 			</div>
+			<p class="note">Note: Q-scores use approximate normative values and are not clinical-grade.</p>
 		</div>
   </body>
 </html>
