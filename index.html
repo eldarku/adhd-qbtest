@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<title>Shapegame</title>
+	<meta charset="utf-8"/>
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto:wght@100;300&display=swap" rel="stylesheet">
+	<script src="plotly-latest.min.js"></script>
+	<script src="pico.js"></script>
+	<script src="camvas.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
+	<script type="text/javascript">
+		const OUTLIER_THRESHOLD = 2000;
+		var redColor = '#ff0000';
+		var blueColor = '#0000ff';
+		var canvasSize = [200, 200];
+
+		var started = false;
+		var startTime = undefined;
+		var expectingClick = false;
+		var missedClicks = 0;
+		var errorClicks = 0;
+		var anticipatoryClicks = 0;
+		var delayTimer = undefined;
+		var correct = 0;
+		var totalClicks = 0;
+		var timesShapesShown = [0, 0, 0, 0];
+		var delays = {x: [], y: [], mode: 'markers', type: 'scatter', name: 'Correct', marker: {color: 'rgb(0, 255, 0)'}};
+		var impulsiveDelays = {x: [], y: [], mode: 'markers', type: 'scatter', name: 'Comission error', marker: {color: 'rgb(255, 0, 0)'}};
+		var outlierDelays = {x: [], y: [], mode: 'markers', type: 'scatter', name: 'Anticipatory', marker: {color: 'rgb(170, 100, 0)'}};
+		var missed = {x: [], y: [], mode: 'markers', type: 'scatter', name: 'Omission', marker: {color: 'rgb(0, 0, 0)'}};
+		var events = [];
+		var lastShape = undefined;
+        var canvas = undefined; 
+		var ctx = undefined;
+		var movementData = [];
+
+		var timeLimit = 20 * 60 * 1000;
+
+		window.addEventListener("click", clickEvent);
+		window.addEventListener('keydown', function(e) {
+			if (e.keyCode == 32) {
+				clickEvent(e);
+			}
+		});
+		
+		function clearVariables() {
+			startTime = undefined;
+			expectingClick = false;
+			missedClicks = 0;
+			errorClicks = 0;
+			anticipatoryClicks = 0;
+			delayTimer = undefined;
+			correct = 0;
+			totalClicks = 0;
+			timesShapesShown = [0, 0, 0, 0];
+			delays = {x: [], y: [], mode: 'markers', type: 'scatter', name: 'Correct', marker: {color: 'rgb(0, 255, 0)'}};
+			impulsiveDelays = {x: [], y: [], mode: 'markers', type: 'scatter', name: 'Comission error', marker: {color: 'rgb(255, 0, 0)'}};
+			outlierDelays = {x: [], y: [], mode: 'markers', type: 'scatter', name: 'Anticipatory', marker: {color: 'rgb(170, 100, 0)'}};
+			missed = {x: [], y: [], mode: 'markers', type: 'scatter', name: 'Omission', marker: {color: 'rgb(0, 0, 0)'}};
+			events = [];
+			lastShape = undefined;
+			movementData = [];
+		}
+
+		function clickEvent(evt) {
+			if (started) {
+				totalClicks++;				
+				let delta = endDelayTimer();
+				if (expectingClick) {	
+					correct++;
+					expectingClick = 0;
+					
+					delays['x'].push(new Date());
+					delays['y'].push(delta);
+				} else {
+					if (delta > OUTLIER_THRESHOLD) {
+						anticipatoryClicks++;
+						outlierDelays['x'].push(new Date());
+						outlierDelays['y'].push(delta);
+					} else {
+						errorClicks++;
+						impulsiveDelays['x'].push(new Date());
+						impulsiveDelays['y'].push(delta);
+					}
+				}
+				printStats();
+			}
+		}
+
+		function startDelayTimer() {				
+			delayTimer = new Date();
+		}
+
+		function endDelayTimer() {
+			let delta = undefined;
+			if (delayTimer) {
+				delta = new Date() - delayTimer;
+				delayTimer = undefined;
+			}
+			return delta;
+		}
+
+		function drawMovementGraphBackground() {
+			let ctx = document.getElementById("movement").getContext('2d');
+			ctx.beginPath();
+			ctx.moveTo(0, 240);
+			ctx.lineTo(640, 240)
+			ctx.lineWidth = 0.5;
+			ctx.strokeStyle = 'gray';
+			ctx.stroke();
+
+			ctx.beginPath();
+			ctx.moveTo(320, 0);
+			ctx.lineTo(320, 640)
+			ctx.lineWidth = 0.5;
+			ctx.strokeStyle = 'gray';
+			ctx.stroke();
+		}
+
+		function init() {
+			clearVariables();
+			// Hide results from previous test
+			var resultsDiv = document.getElementById('results');
+			if (resultsDiv) {
+				resultsDiv.style.display = 'none';
+				for (var q = 1; q <= 4; q++) {
+					var c = document.getElementById('movementQ' + q);
+					if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
+				}
+			}
+			document.getElementById('canvas').style.display = 'block';
+			drawMovementGraphBackground();
+			startTracking();
+			let minutesField = document.getElementById("testLengthFieldMinutes");
+			let secondsField = document.getElementById("testLengthFieldSeconds");
+			let minutes = parseInt(minutesField.value);
+			let seconds = parseInt(secondsField.value);
+						
+			timeLimit = (minutes * 60 + seconds) * 1000;
+			if (timeLimit <= 0) {
+				return
+			}
+			
+			setTimeout(() => {
+				started = true;
+
+
+				let graphElement = document.getElementById('finalGraph');
+				Plotly.purge(graphElement);
+
+				let startButton = document.getElementById('wrapper');
+				startButton.style.display = "none";
+				canvas = document.getElementById('canvas');
+				ctx = canvas.getContext('2d');
+
+				startTime = new Date();
+				main();
+			
+			}, 500);
+		}
+
+		function endTest() {
+			let currentTime = new Date();
+			let delta = currentTime - startTime;
+			if (delta > timeLimit) {
+				console.log("Stop");
+				printStats();
+				stopTracking();
+
+				window.setTimeout(function() {
+					started = false;
+					document.getElementById('canvas').style.display = 'none';
+					showResults();
+				}, 500);
+				return true;
+			} else return false;
+		}
+
+		function filterByQuarter(xArr, yArr, q) {
+			var quarterDuration = timeLimit / 4;
+			var qStart = startTime.getTime() + q * quarterDuration;
+			var qEnd = qStart + quarterDuration;
+			var fx = [], fy = [];
+			for (var i = 0; i < xArr.length; i++) {
+				var t = xArr[i].getTime();
+				if (t >= qStart && t < qEnd) {
+					fx.push(xArr[i]);
+					fy.push(yArr[i]);
+				}
+			}
+			return {x: fx, y: fy};
+		}
+
+		function filterMovementByQuarter(q) {
+			var quarterDuration = timeLimit / 4;
+			var qStart = startTime.getTime() + q * quarterDuration;
+			var qEnd = qStart + quarterDuration;
+			return movementData.filter(function(p) { return p.t >= qStart && p.t < qEnd; });
+		}
+
+		function computeMovementStats(points) {
+			if (points.length < 2) return {distance: 0, surfaceArea: 0, microMovements: 0, movementTime: '0.0'};
+			var totalDist = 0, microMovements = 0, movingFrames = 0;
+			var xs = [], ys = [];
+			for (var i = 0; i < points.length; i++) { xs.push(points[i].x); ys.push(points[i].y); }
+			for (var i = 1; i < points.length; i++) {
+				var dx = points[i].x - points[i-1].x;
+				var dy = points[i].y - points[i-1].y;
+				var d = Math.sqrt(dx*dx + dy*dy);
+				totalDist += d;
+				if (d < 5) microMovements++;
+				if (d > 2) movingFrames++;
+			}
+			var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+			var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+			var surfaceArea = Math.round((maxX - minX) * (maxY - minY));
+			var movementTime = ((movingFrames / (points.length - 1)) * 100).toFixed(1);
+			return {
+				distance: Math.round(totalDist),
+				surfaceArea: surfaceArea,
+				microMovements: microMovements,
+				movementTime: movementTime
+			};
+		}
+
+		function computeAttentionStats(correctRT, missedCount, totalStimuli, commissionErrors) {
+			var mean = 0, std = 0, normVar = 0;
+			if (correctRT.length > 0) {
+				mean = correctRT.reduce(function(a, b) { return a + b; }, 0) / correctRT.length;
+				if (correctRT.length > 1) {
+					var variance = correctRT.reduce(function(sum, val) { return sum + (val - mean) * (val - mean); }, 0) / (correctRT.length - 1);
+					std = Math.sqrt(variance);
+				}
+				normVar = mean > 0 ? (std / mean) * 100 : 0;
+			}
+			var omissionPct = totalStimuli > 0 ? (missedCount / totalStimuli) * 100 : 0;
+			var commissionPct = totalStimuli > 0 ? (commissionErrors / totalStimuli) * 100 : 0;
+			var errorRate = totalStimuli > 0 ? ((missedCount + commissionErrors) / totalStimuli) * 100 : 0;
+			return {
+				reactionTime: Math.round(mean),
+				reactionTimeVar: Math.round(std),
+				omissionPct: omissionPct.toFixed(1),
+				omissionCount: missedCount,
+				normVar: normVar.toFixed(1),
+				commissionPct: commissionPct.toFixed(1),
+				commissionCount: commissionErrors,
+				errorRate: errorRate.toFixed(1)
+			};
+		}
+
+		function drawQuarterMovement(canvasId, points) {
+			var c = document.getElementById(canvasId);
+			if (!c || points.length < 2) return;
+			var qctx = c.getContext('2d');
+			var w = c.width, h = c.height;
+			qctx.clearRect(0, 0, w, h);
+			qctx.beginPath();
+			qctx.moveTo(0, h/2); qctx.lineTo(w, h/2);
+			qctx.moveTo(w/2, 0); qctx.lineTo(w/2, h);
+			qctx.lineWidth = 0.5;
+			qctx.strokeStyle = '#ccc';
+			qctx.stroke();
+			var xs = [], ys = [];
+			for (var i = 0; i < points.length; i++) { xs.push(points[i].x); ys.push(points[i].y); }
+			var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+			var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+			var rangeX = maxX - minX || 1, rangeY = maxY - minY || 1;
+			var margin = 10;
+			qctx.beginPath();
+			for (var i = 0; i < points.length; i++) {
+				var px = margin + ((points[i].x - minX) / rangeX) * (w - 2*margin);
+				var py = margin + ((points[i].y - minY) / rangeY) * (h - 2*margin);
+				if (i === 0) qctx.moveTo(px, py);
+				else qctx.lineTo(px, py);
+			}
+			qctx.lineWidth = 0.5;
+			qctx.strokeStyle = 'rgba(0,0,0,0.6)';
+			qctx.stroke();
+		}
+
+		function showResults() {
+			var resultsDiv = document.getElementById('results');
+			resultsDiv.style.display = 'block';
+			var quarterDuration = timeLimit / 4;
+			var quarterStats = [];
+			for (var q = 0; q < 4; q++) {
+				var mvPoints = filterMovementByQuarter(q);
+				var mvStats = computeMovementStats(mvPoints);
+				var correctQ = filterByQuarter(delays.x, delays.y, q);
+				var missedQ = filterByQuarter(missed.x, missed.y, q);
+				var errorQ = filterByQuarter(impulsiveDelays.x, impulsiveDelays.y, q);
+				var outlierQ = filterByQuarter(outlierDelays.x, outlierDelays.y, q);
+				var eventsQ = events.filter(function(e) {
+					var t = e.time.getTime();
+					var qS = startTime.getTime() + q * quarterDuration;
+					var qE = qS + quarterDuration;
+					return t >= qS && t < qE;
+				});
+				var totalStimuliQ = eventsQ.length;
+				var attStats = computeAttentionStats(correctQ.y, missedQ.y.length, totalStimuliQ, errorQ.y.length);
+				quarterStats.push({
+					quarter: q + 1,
+					movement: mvStats,
+					movementPoints: mvPoints,
+					attention: attStats,
+					correctCount: correctQ.y.length,
+					missedCount: missedQ.y.length,
+					errorCount: errorQ.y.length,
+					outlierCount: outlierQ.y.length,
+					totalStimuli: totalStimuliQ
+				});
+			}
+			// Draw movement canvases and labels
+			for (var q = 0; q < 4; q++) {
+				drawQuarterMovement('movementQ' + (q+1), quarterStats[q].movementPoints);
+				document.getElementById('surfaceQ' + (q+1)).textContent = 'O = ' + quarterStats[q].movement.surfaceArea + ' px\u00B2';
+				document.getElementById('distanceQ' + (q+1)).textContent = 'A = ' + quarterStats[q].movement.distance + ' px';
+			}
+			// Build scatter plot with quarter markers
+			function toMinutes(dateArr) {
+				return dateArr.map(function(d) { return (d.getTime() - startTime.getTime()) / 60000; });
+			}
+			var totalMinutes = timeLimit / 60000;
+			var qMinutes = totalMinutes / 4;
+			var plotData = [
+				{x: toMinutes(delays.x), y: delays.y, mode: 'markers', type: 'scatter', name: 'Correct', marker: {color: 'rgb(0,200,0)', symbol: 'circle', size: 8}},
+				{x: toMinutes(impulsiveDelays.x), y: impulsiveDelays.y, mode: 'markers', type: 'scatter', name: 'Commission error', marker: {color: 'rgb(255,0,0)', symbol: 'square', size: 8}},
+				{x: toMinutes(outlierDelays.x), y: outlierDelays.y, mode: 'markers', type: 'scatter', name: 'Outlier', marker: {color: 'rgb(0,0,0)', symbol: 'circle', size: 8}},
+				{x: toMinutes(missed.x), y: missed.x.map(function() { return 0; }), mode: 'markers', type: 'scatter', name: 'Omission', marker: {color: 'rgb(0,0,0)', symbol: 'line-ns', size: 10, line: {width: 2}}}
+			];
+			var shapes = [];
+			for (var i = 1; i < 4; i++) {
+				shapes.push({type: 'line', x0: i*qMinutes, x1: i*qMinutes, y0: 0, y1: 1, yref: 'paper', line: {color: 'gray', width: 1, dash: 'dot'}});
+			}
+			shapes.push({type: 'line', x0: 0, x1: totalMinutes, y0: 1000, y1: 1000, line: {color: 'gray', width: 0.5, dash: 'dash'}});
+			var annotations = [];
+			for (var i = 0; i < 4; i++) {
+				annotations.push({x: i*qMinutes + qMinutes/2, y: 1.05, yref: 'paper', text: 'Q'+(i+1), showarrow: false, font: {size: 12, color: 'gray'}});
+			}
+			Plotly.newPlot('reactionTimePlot', plotData, {
+				margin: {t: 30, b: 50, l: 60, r: 20},
+				xaxis: {title: 'Time (min)', range: [0, totalMinutes], dtick: qMinutes},
+				yaxis: {title: 'Reaction time (ms)', rangemode: 'tozero'},
+				shapes: shapes, annotations: annotations,
+				showlegend: true, legend: {orientation: 'h', y: -0.2}
+			}, {responsive: true});
+			// Activity table (Q2-Q4 aggregate)
+			var q234mv = {distance: 0, surfaceArea: 0, microMovements: 0, movementTimeSum: 0};
+			for (var q = 1; q < 4; q++) {
+				q234mv.distance += quarterStats[q].movement.distance;
+				q234mv.surfaceArea += quarterStats[q].movement.surfaceArea;
+				q234mv.microMovements += quarterStats[q].movement.microMovements;
+				q234mv.movementTimeSum += parseFloat(quarterStats[q].movement.movementTime);
+			}
+			var avgMvTime = (q234mv.movementTimeSum / 3).toFixed(1);
+			document.getElementById('activityTable').innerHTML =
+				'<tr><th>Metric</th><th>Q2-Q4</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr>' +
+				'<tr><td>Movement time</td><td>' + avgMvTime + '%</td>' + quarterStats.map(function(q){return '<td>'+q.movement.movementTime+'%</td>';}).join('') + '</tr>' +
+				'<tr><td>Distance</td><td>' + q234mv.distance + ' px</td>' + quarterStats.map(function(q){return '<td>'+q.movement.distance+' px</td>';}).join('') + '</tr>' +
+				'<tr><td>Surface area</td><td>' + q234mv.surfaceArea + ' px\u00B2</td>' + quarterStats.map(function(q){return '<td>'+q.movement.surfaceArea+' px\u00B2</td>';}).join('') + '</tr>' +
+				'<tr><td>Micro-movements</td><td>' + q234mv.microMovements + '</td>' + quarterStats.map(function(q){return '<td>'+q.movement.microMovements+'</td>';}).join('') + '</tr>';
+			// Attention & impulse table (Q2-Q4 aggregate)
+			var allCorrectRT_Q234 = [], totalMissed_Q234 = 0, totalErrors_Q234 = 0, totalStimuli_Q234 = 0;
+			for (var q = 1; q < 4; q++) {
+				var cq = filterByQuarter(delays.x, delays.y, q);
+				allCorrectRT_Q234 = allCorrectRT_Q234.concat(cq.y);
+				totalMissed_Q234 += quarterStats[q].missedCount;
+				totalErrors_Q234 += quarterStats[q].errorCount;
+				totalStimuli_Q234 += quarterStats[q].totalStimuli;
+			}
+			var overallAtt = computeAttentionStats(allCorrectRT_Q234, totalMissed_Q234, totalStimuli_Q234, totalErrors_Q234);
+			document.getElementById('attentionTable').innerHTML =
+				'<tr><th>Metric</th><th>Q2-Q4</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr>' +
+				'<tr><td>RT variance</td><td>' + overallAtt.reactionTimeVar + ' ms</td>' + quarterStats.map(function(q){return '<td>'+q.attention.reactionTimeVar+' ms</td>';}).join('') + '</tr>' +
+				'<tr><td>Omission</td><td>' + overallAtt.omissionPct + '%</td>' + quarterStats.map(function(q){return '<td>'+q.attention.omissionPct+'%</td>';}).join('') + '</tr>' +
+				'<tr><td>Reaction time</td><td>' + overallAtt.reactionTime + ' ms</td>' + quarterStats.map(function(q){return '<td>'+q.attention.reactionTime+' ms</td>';}).join('') + '</tr>' +
+				'<tr><td>Norm. variance</td><td>' + overallAtt.normVar + '%</td>' + quarterStats.map(function(q){return '<td>'+q.attention.normVar+'%</td>';}).join('') + '</tr>' +
+				'<tr><td>Commission error</td><td>' + overallAtt.commissionPct + '%</td>' + quarterStats.map(function(q){return '<td>'+q.attention.commissionPct+'%</td>';}).join('') + '</tr>' +
+				'<tr><td>Error rate</td><td>' + overallAtt.errorRate + '%</td>' + quarterStats.map(function(q){return '<td>'+q.attention.errorRate+'%</td>';}).join('') + '</tr>';
+			// Store for export
+			window._quarterStats = quarterStats;
+			window._overallAtt = overallAtt;
+			window._q234Movement = q234mv;
+			window._avgMovementTime = avgMvTime;
+			// Show start button
+			document.getElementById('wrapper').style.display = 'block';
+		}
+
+		function padRight(str, len) {
+			return (str + Array(len+1).join(' ')).substring(0, len);
+		}
+
+		function exportResults() {
+			var qs = window._quarterStats;
+			var att = window._overallAtt;
+			var mv = window._q234Movement;
+			var mvTime = window._avgMovementTime;
+			var testDate = startTime.toLocaleDateString() + ' ' + startTime.toLocaleTimeString();
+			var testDuration = (timeLimit / 60000) + ' minutes';
+			var lines = [];
+			lines.push('QBTest Results');
+			lines.push('==============');
+			lines.push('Test date: ' + testDate);
+			lines.push('Test duration: ' + testDuration);
+			lines.push('');
+			lines.push('=== Activity Results ===');
+			lines.push('');
+			lines.push(padRight('Metric', 20) + padRight('Q2-Q4', 12) + padRight('Q1', 12) + padRight('Q2', 12) + padRight('Q3', 12) + padRight('Q4', 12));
+			lines.push(Array(81).join('-'));
+			lines.push(padRight('Movement time', 20) + padRight(mvTime+'%', 12) + qs.map(function(q){return padRight(q.movement.movementTime+'%', 12);}).join(''));
+			lines.push(padRight('Distance', 20) + padRight(mv.distance+' px', 12) + qs.map(function(q){return padRight(q.movement.distance+' px', 12);}).join(''));
+			lines.push(padRight('Surface area', 20) + padRight(mv.surfaceArea+' px\u00B2', 12) + qs.map(function(q){return padRight(q.movement.surfaceArea+' px\u00B2', 12);}).join(''));
+			lines.push(padRight('Micro-movements', 20) + padRight(mv.microMovements+'', 12) + qs.map(function(q){return padRight(q.movement.microMovements+'', 12);}).join(''));
+			lines.push('');
+			lines.push('=== Attention & Impulse Control Results ===');
+			lines.push('');
+			lines.push(padRight('Metric', 20) + padRight('Q2-Q4', 12) + padRight('Q1', 12) + padRight('Q2', 12) + padRight('Q3', 12) + padRight('Q4', 12));
+			lines.push(Array(81).join('-'));
+			lines.push(padRight('RT variance', 20) + padRight(att.reactionTimeVar+' ms', 12) + qs.map(function(q){return padRight(q.attention.reactionTimeVar+' ms', 12);}).join(''));
+			lines.push(padRight('Omission', 20) + padRight(att.omissionPct+'%', 12) + qs.map(function(q){return padRight(q.attention.omissionPct+'%', 12);}).join(''));
+			lines.push(padRight('Reaction time', 20) + padRight(att.reactionTime+' ms', 12) + qs.map(function(q){return padRight(q.attention.reactionTime+' ms', 12);}).join(''));
+			lines.push(padRight('Norm. variance', 20) + padRight(att.normVar+'%', 12) + qs.map(function(q){return padRight(q.attention.normVar+'%', 12);}).join(''));
+			lines.push(padRight('Commission error', 20) + padRight(att.commissionPct+'%', 12) + qs.map(function(q){return padRight(q.attention.commissionPct+'%', 12);}).join(''));
+			lines.push(padRight('Error rate', 20) + padRight(att.errorRate+'%', 12) + qs.map(function(q){return padRight(q.attention.errorRate+'%', 12);}).join(''));
+			lines.push('');
+			lines.push('=== Per-Quarter Summary ===');
+			lines.push('');
+			for (var i = 0; i < 4; i++) {
+				lines.push('Q' + (i+1) + ':');
+				lines.push('  Stimuli shown: ' + qs[i].totalStimuli);
+				lines.push('  Correct: ' + qs[i].correctCount);
+				lines.push('  Missed: ' + qs[i].missedCount);
+				lines.push('  Commission errors: ' + qs[i].errorCount);
+				lines.push('  Outliers: ' + qs[i].outlierCount);
+				lines.push('  Reaction time: ' + qs[i].attention.reactionTime + ' ms');
+				lines.push('  Distance: ' + qs[i].movement.distance + ' px');
+				lines.push('  Surface area: ' + qs[i].movement.surfaceArea + ' px\u00B2');
+				lines.push('');
+			}
+			lines.push('=== Overall ===');
+			lines.push('Total correct: ' + correct);
+			lines.push('Total missed: ' + missedClicks);
+			lines.push('Total commission errors: ' + errorClicks);
+			lines.push('Total anticipatory: ' + anticipatoryClicks);
+			lines.push('Total clicks: ' + totalClicks);
+			var text = lines.join('\n');
+			var blob = new Blob([text], {type: 'text/plain'});
+			var url = URL.createObjectURL(blob);
+			var a = document.createElement('a');
+			a.href = url;
+			a.download = 'qbtest_results_' + startTime.toISOString().slice(0,10) + '.txt';
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+		}
+
+		function main() {
+			if (endTest()) return;
+			let maxTimeout = 3000;
+			let minTimeout = 1000;
+			let randomTimeout = Math.floor(Math.random() * maxTimeout + minTimeout);
+			// draw a random shape
+			window.setTimeout(()=> {															
+				requestAnimationFrame(draw);
+				let maxTimeout = 300;
+				let minTimeout = 600;
+				let randomTimeout = Math.floor(Math.random() * maxTimeout + minTimeout);
+				// clean the shape
+				window.setTimeout(clear, randomTimeout);										
+				main();
+			}, randomTimeout);
+		}
+
+		function headTrackingEvent(x, y, z){
+			console.log(x);
+			console.log(y);
+			console.log(z);
+		}
+
+		function printStats() {
+			console.clear();
+			console.log("Test length: " + Math.floor((new Date() - startTime)/1000) + "/" + timeLimit/1000 + " seconds");
+			console.log("Correct clicks: " + correct);
+			console.log("Impulsive clicks: " + errorClicks);
+			console.log("Anticipatory clicks: " + anticipatoryClicks);
+			console.log("Missed clicks: " + missedClicks);
+			console.log("Total clicks:" + totalClicks);
+			console.log("Shapes shown: " + timesShapesShown);
+			console.log("Tracking active: " + trackingActive);
+			console.log("**********")
+		}
+
+		function drawCircle(ctx, color) {
+			ctx.fillStyle = color;
+			ctx.beginPath();
+			ctx.arc(canvasSize[0]/2, canvasSize[1]/2, 100, 0, Math.PI*2);
+			ctx.fill();
+		}
+
+		function drawRectangle(ctx, color) {
+			ctx.fillStyle = color;
+			ctx.fillRect(0, 0, canvasSize[0], canvasSize[1]);
+		}
+
+		function clear() {
+			ctx.clearRect(0, 0, canvasSize[0], canvasSize[1]); // clear canvas
+		}
+
+		function draw() {	
+			startDelayTimer();			
+			if (expectingClick) {
+				missedClicks++;
+				expectingClick = 0;
+				missed['x'].push(new Date());
+				missed['y'].push(1);
+			}
+			let randInt = Math.floor(Math.random() * 10) % 4;
+
+			if (lastShape == randInt) {					
+				expectingClick = 1;
+			} else {
+				expectingClick = 0;
+			}
+			
+			lastShape = randInt;
+			timesShapesShown[randInt]++;
+
+			events.push({
+				time: new Date(), 
+				shapeType: randInt,
+				event: "drawEvent"
+			})
+
+			switch(randInt) {
+				case 0:
+					drawRectangle(ctx, redColor);
+					break;
+				case 1:
+					drawRectangle(ctx, blueColor);
+					break;
+				case 2:
+					drawCircle(ctx, redColor);
+					break;
+				case 3:
+					drawCircle(ctx, blueColor);
+					break;
+			}
+				
+			printStats();
+		}
+		function onTimeChange(e) {
+			if(isNaN(parseInt(e.value))) e.value = 0
+			else if ( parseInt(e.value) >= 60) e.value = 59
+		}
+		function onSecChange(e) {
+			onTimeChange(e);
+			localStorage.setItem('sec', e.value);
+		}
+		function onMinChange(e) {
+			onTimeChange(e);
+			localStorage.setItem('min', e.value);
+		}
+		function onPageLoad() {
+			if (localStorage.getItem('min')) document.getElementById('testLengthFieldMinutes').value=localStorage.getItem('min');
+			if (localStorage.getItem('sec')) document.getElementById('testLengthFieldSeconds').value=localStorage.getItem('sec');
+		}
+		var tracking_initialized = false;
+		var mycamvas = undefined;
+		var prevCoords = undefined;
+		var trackingActive = undefined;
+		function stopTracking() {
+			trackingActive = false;
+		}
+		function stopper() {
+			return trackingActive;
+		}
+		function startTracking() {
+			trackingActive = true;
+			/*
+				(0) check whether we're already running face detection
+			*/
+			if(tracking_initialized)
+				return; // if yes, then do not initialize everything again
+			/*
+				(1) initialize the pico.js face detector
+			*/
+			var update_memory = pico.instantiate_detection_memory(5); // we will use the detecions of the last 5 frames
+			var facefinder_classify_region = function(r, c, s, pixels, ldim) {return -1.0;};
+			var cascadeurl = 'facefinder';
+			var cascadeurl = 'https://raw.githubusercontent.com/nenadmarkus/pico/c2e81f9d23cc11d1a612fd21e4f9de0921a5d0d9/rnt/cascades/facefinder';
+			fetch(cascadeurl).then(function(response) {
+				response.arrayBuffer().then(function(buffer) {
+					var bytes = new Int8Array(buffer);
+					facefinder_classify_region = pico.unpack_cascade(bytes);
+					console.log('* facefinder loaded');
+				})
+			})
+			/*
+				(3) get the drawing context on the canvas and define a function to transform an RGBA image to grayscale
+			*/
+			var ctx = document.getElementById('webcam').getContext('2d');
+			var ctx2 = document.getElementById('movement').getContext('2d');
+			function rgba_to_grayscale(rgba, nrows, ncols) {
+				var gray = new Uint8Array(nrows*ncols);
+				for(var r=0; r<nrows; ++r)
+					for(var c=0; c<ncols; ++c)
+						// gray = 0.2*red + 0.7*green + 0.1*blue
+						gray[r*ncols + c] = (2*rgba[r*4*ncols+4*c+0]+7*rgba[r*4*ncols+4*c+1]+1*rgba[r*4*ncols+4*c+2])/10;
+				return gray;
+			}
+			function scaleBetween(unscaledNum, minAllowed, maxAllowed, min, max) {
+				return (maxAllowed - minAllowed) * (unscaledNum - min) / (max - min) + minAllowed;
+			}
+			/*
+				(4) this function is called each time a video frame becomes available
+			*/
+			var processfn = function(video, dt) {
+				// render the video frame to the canvas element and extract RGBA pixel data
+				ctx.drawImage(video, 0, 0);
+				var rgba = ctx.getImageData(0, 0, 640, 480).data;
+				// prepare input to `run_cascade`
+				image = {
+					"pixels": rgba_to_grayscale(rgba, 480, 640),
+					"nrows": 480,
+					"ncols": 640,
+					"ldim": 640
+				}
+				params = {
+					"shiftfactor": 0.1, // move the detection window by 10% of its size
+					"minsize": 100,     // minimum size of a face
+					"maxsize": 1000,    // maximum size of a face
+					"scalefactor": 1.1  // for multiscale processing: resize the detection window by 10% when moving to the higher scale
+				}
+				// run the cascade over the frame and cluster the obtained detections
+				// dets is an array that contains (r, c, s, q) quadruplets
+				// (representing row, column, scale and detection score)
+				dets = pico.run_cascade(image, facefinder_classify_region, params);
+				dets = update_memory(dets);
+				dets = pico.cluster_detections(dets, 0.2); // set IoU threshold to 0.2
+				// draw detections
+				if (dets.length >= 1) {
+					// check the detection score
+					// if it's above the threshold, draw it
+					// (the constant 50.0 is empirical: other cascades might require a different one)
+					// console.log(dets[i][0])
+					// console.log(dets[i][1])
+					if(dets[0][3]>50)
+					{
+						var r, c, s;
+						//
+						ctx.beginPath();
+						ctx.arc(dets[0][1], dets[0][0], 2, 0, 2*Math.PI, false);
+						ctx.lineWidth = 3;
+						ctx.strokeStyle = 'red';
+						ctx.stroke();
+
+						if (prevCoords) {
+							ctx2.beginPath();
+							// ctx2.arc(dets[0][1], dets[0][0], 1, 0, 2*Math.PI, false);
+							ctx2.moveTo(dets[0][1], dets[0][0])
+							ctx2.lineTo(prevCoords[1], prevCoords[0])
+							ctx2.lineWidth = 1;
+							let alpha = scaleBetween(dets[0][2], 0.1, 1, 100, 200);
+							ctx2.strokeStyle = 'rgba(0, 0, 0, ' + alpha + ')';
+							ctx2.stroke();
+						}
+						prevCoords = [dets[0][0], dets[0][1]]
+						if (started) {
+							movementData.push({x: dets[0][1], y: dets[0][0], t: Date.now()});
+						}
+					}
+				}
+			}
+			/*
+				(5) instantiate camera handling (see https://github.com/cbrandolino/camvas)
+			*/
+			mycamvas = new camvas(ctx, processfn, stopper);
+			/*
+				(6) it seems that everything went well
+			*/
+			tracking_initialized = true;
+		}
+	</script>
+	<style type="text/css">
+	
+		body {
+			font-family: 'Roboto', sans-serif;
+			height: 500px;
+		}
+		div {
+			display: block;
+			align-items: center;
+		}
+		.center {
+			width:100%;
+			display: flex;
+			justify-content: center;
+		}
+		#canvas {
+			margin: 0;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			-ms-transform: translate(-50%, -50%);
+			transform: translate(-50%, -50%);
+		}
+		#startButton {
+			box-shadow:inset 0px 1px 0px 0px #cf866c;
+			background:linear-gradient(to bottom, #d0451b 5%, #bc3315 100%);
+			background-color:#d0451b;
+			border-radius:3px;
+			border:1px solid #942911;
+			display:inline-block;
+			cursor:pointer;
+			color:#ffffff;
+			font-family:Arial;
+			font-size:13px;
+			padding:6px 24px;
+			text-decoration:none;
+			text-shadow:0px 1px 0px #854629;
+		}
+		#startButton:hover {
+			background:linear-gradient(to bottom, #bc3315 5%, #d0451b 100%);
+			background-color:#bc3315;
+		}
+		#startButton:active {
+			position:relative;
+			top:1px;
+		} 
+		input { 
+			border-color:#cccccc; 
+			border-style:solid; 
+			font-size:14px; 
+			padding:6px; 
+			border-width:1px; 
+			border-radius:7px; 
+			width: 20px;
+		} 
+		input:focus { outline:none; } 
+		#testLengthSpan {
+			margin-right: 5px;
+		} 
+		label { margin-left: 2px; margin-right: 10px; }
+		#testLengthDiv {
+			margin-bottom: 10px;
+		}
+
+		#webcam {
+			display: none;
+		}
+
+		#movement {
+			display: none;
+		}
+		#results {
+			max-width: 900px;
+			margin: 20px auto;
+			padding: 20px;
+		}
+		#results h2 {
+			border-bottom: 2px solid #333;
+			padding-bottom: 5px;
+			margin-top: 30px;
+		}
+		.quarter-row {
+			display: flex;
+			justify-content: space-around;
+			margin: 10px 0;
+		}
+		.quarter-panel {
+			text-align: center;
+		}
+		.quarter-panel canvas {
+			border: 1px solid #ccc;
+		}
+		.quarter-label {
+			font-weight: bold;
+			margin-top: 5px;
+		}
+		.stat-label {
+			font-size: 13px;
+			color: #555;
+		}
+		.tables-row {
+			display: flex;
+			justify-content: space-between;
+			gap: 20px;
+			margin-top: 20px;
+		}
+		.table-panel {
+			flex: 1;
+		}
+		.table-panel table {
+			width: 100%;
+			border-collapse: collapse;
+			font-size: 13px;
+		}
+		.table-panel th, .table-panel td {
+			border: 1px solid #ddd;
+			padding: 4px 8px;
+			text-align: left;
+		}
+		.table-panel th {
+			background: #f5f5f5;
+		}
+		#exportButton {
+			background: linear-gradient(to bottom, #2e7d32 5%, #1b5e20 100%);
+			background-color: #2e7d32;
+			border-radius: 3px;
+			border: 1px solid #1b5e20;
+			cursor: pointer;
+			color: #ffffff;
+			font-family: Arial;
+			font-size: 13px;
+			padding: 6px 24px;
+			text-decoration: none;
+		}
+		#exportButton:hover {
+			background: linear-gradient(to bottom, #1b5e20 5%, #2e7d32 100%);
+		}
+
+	</style>
+  </head>
+  <body onload="onPageLoad()">
+	    <div id="wrapper">
+			<div id="testLengthDiv" class="center">
+				<span id="testLengthSpan"> Test length: </span> 
+				<input id="testLengthFieldMinutes" value="20" onchange="onMinChange(this)"></input> <label> minute(s) </label> 
+				<input id="testLengthFieldSeconds" value="0" onchange="onSecChange(this)"></input> <label> second(s) </label>
+			</div>
+			<div id="startButtonDiv" class="center">
+				<button id="startButton" onclick="init()">Start</button>
+			</div>
+			<div id="finalGraph" style="margin: 50px auto; width:600px;height:250px;"></div>
+	    </div>
+		<canvas id="canvas" height=200 width=200></canvas>
+		<!-- <button onclick="drawMovementGraphBackground()">test</button> -->
+		<p><center><canvas id="webcam" width=640 height=480></canvas></center></p>
+		<p><center><canvas id="movement" width=640 height=480></canvas></center></p>
+		<div id="results" style="display:none;">
+			<h2>Activity</h2>
+			<div class="quarter-row">
+				<div class="quarter-panel">
+					<canvas id="movementQ1" width="150" height="150"></canvas>
+					<div class="quarter-label">Q1</div>
+					<div id="surfaceQ1" class="stat-label">O = 0 px²</div>
+				</div>
+				<div class="quarter-panel">
+					<canvas id="movementQ2" width="150" height="150"></canvas>
+					<div class="quarter-label">Q2</div>
+					<div id="surfaceQ2" class="stat-label">O = 0 px²</div>
+				</div>
+				<div class="quarter-panel">
+					<canvas id="movementQ3" width="150" height="150"></canvas>
+					<div class="quarter-label">Q3</div>
+					<div id="surfaceQ3" class="stat-label">O = 0 px²</div>
+				</div>
+				<div class="quarter-panel">
+					<canvas id="movementQ4" width="150" height="150"></canvas>
+					<div class="quarter-label">Q4</div>
+					<div id="surfaceQ4" class="stat-label">O = 0 px²</div>
+				</div>
+			</div>
+			<div class="quarter-row">
+				<div class="quarter-panel"><div id="distanceQ1" class="stat-label">A = 0 px</div></div>
+				<div class="quarter-panel"><div id="distanceQ2" class="stat-label">A = 0 px</div></div>
+				<div class="quarter-panel"><div id="distanceQ3" class="stat-label">A = 0 px</div></div>
+				<div class="quarter-panel"><div id="distanceQ4" class="stat-label">A = 0 px</div></div>
+			</div>
+			<h2>Attention &amp; Impulse Control</h2>
+			<div id="reactionTimePlot" style="width:100%;height:350px;"></div>
+			<div class="tables-row">
+				<div class="table-panel">
+					<h3>Activity Results Q2-Q4</h3>
+					<table id="activityTable"></table>
+				</div>
+				<div class="table-panel">
+					<h3>Attention &amp; Impulse Control Results Q2-Q4</h3>
+					<table id="attentionTable"></table>
+				</div>
+			</div>
+			<div class="center" style="margin-top:20px;">
+				<button id="exportButton" onclick="exportResults()">Export as Text</button>
+			</div>
+		</div>
+  </body>
+</html>
