@@ -493,18 +493,23 @@
 			var qsc = window._qscores;
 			var testDate = startTime.toLocaleDateString() + ' ' + startTime.toLocaleTimeString();
 			var testDuration = (timeLimit / 60000) + ' minutes';
+			var t0 = startTime.getTime();
+			var shapeNames = ['RedRect', 'BlueRect', 'RedCircle', 'BlueCircle'];
 			var lines = [];
 			lines.push('QBTest Results');
 			lines.push('==============');
 			lines.push('Test date: ' + testDate);
 			lines.push('Test duration: ' + testDuration);
+			lines.push('Test start (epoch ms): ' + t0);
 			lines.push('');
+			// --- Composite Q-Scores ---
 			lines.push('=== Composite Q-Scores (Q2-Q4) ===');
 			lines.push('');
 			lines.push(padRight('QbActivity', 20) + 'Q-score: ' + qsc.composite.qbActivity.qscore + '  Percentile: ' + qsc.composite.qbActivity.percentile);
 			lines.push(padRight('QbInattention', 20) + 'Q-score: ' + qsc.composite.qbInattention.qscore + '  Percentile: ' + qsc.composite.qbInattention.percentile);
 			lines.push(padRight('QbImpulsivity', 20) + 'Q-score: ' + qsc.composite.qbImpulsivity.qscore + '  Percentile: ' + qsc.composite.qbImpulsivity.percentile);
 			lines.push('');
+			// --- Activity ---
 			lines.push('=== Activity Results (Q2-Q4) ===');
 			lines.push('');
 			lines.push(padRight('Metric', 20) + padRight('Result', 14) + padRight('Q-score', 10) + padRight('Pctl', 8));
@@ -514,6 +519,7 @@
 			lines.push(padRight('Surface area', 20) + padRight(mv.surfaceArea+' px\u00B2', 14) + padRight(qsc.activity.surfaceArea.qscore+'', 10) + padRight(qsc.activity.surfaceArea.percentile+'', 8));
 			lines.push(padRight('Micro-movements', 20) + padRight(mv.microMovements+'', 14) + padRight(qsc.activity.microMovements.qscore+'', 10) + padRight(qsc.activity.microMovements.percentile+'', 8));
 			lines.push('');
+			// --- Attention & Impulse ---
 			lines.push('=== Attention & Impulse Results (Q2-Q4) ===');
 			lines.push('');
 			lines.push(padRight('Metric', 20) + padRight('Result', 14) + padRight('Q-score', 10) + padRight('Pctl', 8));
@@ -527,6 +533,7 @@
 			lines.push(padRight('Commission error', 20) + padRight(att.commissionPct+'%', 14) + padRight(qsc.impulse.commission.qscore+'', 10) + padRight(qsc.impulse.commission.percentile+'', 8));
 			lines.push(padRight('Error rate', 20) + padRight(att.errorRate+'%', 14) + padRight(qsc.impulse.errorRate.qscore+'', 10) + padRight(qsc.impulse.errorRate.percentile+'', 8));
 			lines.push('');
+			// --- Per-Quarter Summary ---
 			lines.push('=== Per-Quarter Summary ===');
 			lines.push('');
 			for (var i = 0; i < 4; i++) {
@@ -542,6 +549,7 @@
 				lines.push('  Surface area: ' + qs[i].movement.surfaceArea + ' px\u00B2');
 				lines.push('');
 			}
+			// --- Overall ---
 			lines.push('=== Overall ===');
 			lines.push('Total correct: ' + correct);
 			lines.push('Total missed: ' + missedClicks);
@@ -550,6 +558,64 @@
 			lines.push('Total clicks: ' + totalClicks);
 			lines.push('');
 			lines.push('Note: Q-scores use approximate normative values (not clinical-grade).');
+			lines.push('');
+			// ============ RAW DATA TABLES ============
+			lines.push('');
+			lines.push('================================================================');
+			lines.push('RAW DATA');
+			lines.push('================================================================');
+			lines.push('');
+			// --- Stimulus events ---
+			lines.push('=== Stimulus Events ===');
+			lines.push('timestamp_ms\ttime_since_start_ms\tshape_index\tshape_name\tis_target');
+			for (var i = 0; i < events.length; i++) {
+				var ev = events[i];
+				var evTime = ev.time.getTime();
+				var isTarget = (i > 0 && ev.shapeType === events[i-1].shapeType) ? 1 : 0;
+				lines.push(evTime + '\t' + (evTime - t0) + '\t' + ev.shapeType + '\t' + shapeNames[ev.shapeType] + '\t' + isTarget);
+			}
+			lines.push('');
+			// --- Correct responses ---
+			lines.push('=== Correct Responses ===');
+			lines.push('timestamp_ms\ttime_since_start_ms\treaction_time_ms');
+			for (var i = 0; i < delays.x.length; i++) {
+				var ts = new Date(delays.x[i]).getTime();
+				lines.push(ts + '\t' + (ts - t0) + '\t' + delays.y[i]);
+			}
+			lines.push('');
+			// --- Commission errors ---
+			lines.push('=== Commission Errors ===');
+			lines.push('timestamp_ms\ttime_since_start_ms\treaction_time_ms');
+			for (var i = 0; i < impulsiveDelays.x.length; i++) {
+				var ts = new Date(impulsiveDelays.x[i]).getTime();
+				lines.push(ts + '\t' + (ts - t0) + '\t' + impulsiveDelays.y[i]);
+			}
+			lines.push('');
+			// --- Anticipatory clicks ---
+			lines.push('=== Anticipatory Clicks ===');
+			lines.push('timestamp_ms\ttime_since_start_ms\treaction_time_ms');
+			for (var i = 0; i < outlierDelays.x.length; i++) {
+				var ts = new Date(outlierDelays.x[i]).getTime();
+				lines.push(ts + '\t' + (ts - t0) + '\t' + outlierDelays.y[i]);
+			}
+			lines.push('');
+			// --- Omissions ---
+			lines.push('=== Omissions ===');
+			lines.push('timestamp_ms\ttime_since_start_ms');
+			for (var i = 0; i < missed.x.length; i++) {
+				var ts = new Date(missed.x[i]).getTime();
+				lines.push(ts + '\t' + (ts - t0));
+			}
+			lines.push('');
+			// --- Head movement ---
+			lines.push('=== Head Movement (per frame) ===');
+			lines.push('timestamp_ms\ttime_since_start_ms\tx_px\ty_px');
+			for (var i = 0; i < movementData.length; i++) {
+				var m = movementData[i];
+				lines.push(m.t + '\t' + (m.t - t0) + '\t' + m.x + '\t' + m.y);
+			}
+			lines.push('');
+			// --- download ---
 			var text = lines.join('\n');
 			var blob = new Blob([text], {type: 'text/plain'});
 			var url = URL.createObjectURL(blob);
