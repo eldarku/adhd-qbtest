@@ -13,17 +13,20 @@
 	<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
 	<script type="text/javascript">
 		const OUTLIER_THRESHOLD = 2000;
+		// Normative values from QbCheck Technical Manual Rev F (2022), Table 4
+		// Adults 20-60, averaged across gender (QbTest 12-60 norm group, N=731)
+		// Movement metrics use pixel units (not comparable to manual's m/cm²)
 		const NORMATIVE = {
-			movementTime: {mean: 18, sd: 8},
-			distance: {mean: 3000, sd: 2000},
-			surfaceArea: {mean: 8000, sd: 5000},
-			microMovements: {mean: 3000, sd: 1500},
-			rtVariance: {mean: 100, sd: 55},
-			omission: {mean: 4, sd: 5},
-			reactionTime: {mean: 500, sd: 120},
-			normVariance: {mean: 22, sd: 10},
-			commission: {mean: 2, sd: 2},
-			errorRate: {mean: 5, sd: 3}
+			movementTime: {mean: 4, sd: 5},       // Time Active %
+			distance: {mean: 3000, sd: 2000},      // pixels (manual: ~3.2m, not comparable)
+			surfaceArea: {mean: 8000, sd: 5000},   // pixels² (manual: ~7.6cm², not comparable)
+			microMovements: {mean: 1710, sd: 1106}, // MicroEvents count
+			rtVariance: {mean: 129, sd: 37},       // RT Variation ms
+			omission: {mean: 4.3, sd: 5.2},        // Omission Error %
+			reactionTime: {mean: 535, sd: 97},     // Reaction Time ms
+			normVariance: {mean: 24, sd: 6},       // Normalized Variation %
+			commission: {mean: 0.6, sd: 0.65},     // Commission Error %
+			errorRate: {mean: 1.5, sd: 1.5}        // Error Rate %
 		};
 		function normalCDF(x) {
 			var t = 1 / (1 + 0.2316419 * Math.abs(x));
@@ -263,7 +266,7 @@
 			};
 		}
 
-		function computeAttentionStats(correctRT, missedCount, totalStimuli, commissionErrors) {
+		function computeAttentionStats(correctRT, missedCount, targetCount, nonTargetCount, commissionErrors) {
 			var mean = 0, std = 0, normVar = 0;
 			if (correctRT.length > 0) {
 				mean = correctRT.reduce(function(a, b) { return a + b; }, 0) / correctRT.length;
@@ -273,8 +276,10 @@
 				}
 				normVar = mean > 0 ? (std / mean) * 100 : 0;
 			}
-			var omissionPct = totalStimuli > 0 ? (missedCount / totalStimuli) * 100 : 0;
-			var commissionPct = totalStimuli > 0 ? (commissionErrors / totalStimuli) * 100 : 0;
+			// Per QbCheck Technical Manual: Omission = NOm/NT, Commission = NCm/NNT
+			var omissionPct = targetCount > 0 ? (missedCount / targetCount) * 100 : 0;
+			var commissionPct = nonTargetCount > 0 ? (commissionErrors / nonTargetCount) * 100 : 0;
+			var totalStimuli = targetCount + nonTargetCount;
 			var errorRate = totalStimuli > 0 ? ((missedCount + commissionErrors) / totalStimuli) * 100 : 0;
 			return {
 				reactionTime: Math.round(mean),
@@ -344,11 +349,14 @@
 					return t >= qS && t < qE;
 				});
 				var totalStimuliQ = eventsQ.length;
-				var attStats = computeAttentionStats(correctQ.y, missedQ.y.length, totalStimuliQ, errorQ.y.length);
+				var targetsQ = eventsQ.filter(function(e) { return e.isTarget; }).length;
+				var nonTargetsQ = totalStimuliQ - targetsQ;
+				var attStats = computeAttentionStats(correctQ.y, missedQ.y.length, targetsQ, nonTargetsQ, errorQ.y.length);
 				quarterStats.push({
 					quarter: q + 1, movement: mvStats, movementPoints: mvPoints, attention: attStats,
 					correctCount: correctQ.y.length, missedCount: missedQ.y.length,
-					errorCount: errorQ.y.length, outlierCount: outlierQ.y.length, totalStimuli: totalStimuliQ
+					errorCount: errorQ.y.length, outlierCount: outlierQ.y.length, totalStimuli: totalStimuliQ,
+					targetCount: targetsQ, nonTargetCount: nonTargetsQ
 				});
 			}
 			// Global bounds for movement canvases
@@ -377,15 +385,16 @@
 				q234mv.movementTimeSum += parseFloat(quarterStats[q].movement.movementTime);
 			}
 			var avgMvTime = (q234mv.movementTimeSum / 3).toFixed(1);
-			var allCorrectRT_Q234 = [], totalMissed_Q234 = 0, totalErrors_Q234 = 0, totalStimuli_Q234 = 0;
+			var allCorrectRT_Q234 = [], totalMissed_Q234 = 0, totalErrors_Q234 = 0, totalTargets_Q234 = 0, totalNonTargets_Q234 = 0;
 			for (var q = 1; q < 4; q++) {
 				var cq = filterByQuarter(delays.x, delays.y, q);
 				allCorrectRT_Q234 = allCorrectRT_Q234.concat(cq.y);
 				totalMissed_Q234 += quarterStats[q].missedCount;
 				totalErrors_Q234 += quarterStats[q].errorCount;
-				totalStimuli_Q234 += quarterStats[q].totalStimuli;
+				totalTargets_Q234 += quarterStats[q].targetCount;
+				totalNonTargets_Q234 += quarterStats[q].nonTargetCount;
 			}
-			var overallAtt = computeAttentionStats(allCorrectRT_Q234, totalMissed_Q234, totalStimuli_Q234, totalErrors_Q234);
+			var overallAtt = computeAttentionStats(allCorrectRT_Q234, totalMissed_Q234, totalTargets_Q234, totalNonTargets_Q234, totalErrors_Q234);
 			// Q-scores
 			var qsMvTime = computeQScore(parseFloat(avgMvTime), NORMATIVE.movementTime);
 			var qsDist = computeQScore(q234mv.distance, NORMATIVE.distance);
@@ -557,7 +566,7 @@
 			lines.push('Total anticipatory: ' + anticipatoryClicks);
 			lines.push('Total clicks: ' + totalClicks);
 			lines.push('');
-			lines.push('Note: Q-scores use approximate normative values (not clinical-grade).');
+			lines.push('Note: Q-scores based on QbCheck Technical Manual Rev F (2022) norms, adults 20-60.');
 			lines.push('');
 			// ============ RAW DATA TABLES ============
 			lines.push('');
@@ -571,7 +580,7 @@
 			for (var i = 0; i < events.length; i++) {
 				var ev = events[i];
 				var evTime = ev.time.getTime();
-				var isTarget = (i > 0 && ev.shapeType === events[i-1].shapeType) ? 1 : 0;
+				var isTarget = ev.isTarget ? 1 : 0;
 				lines.push(evTime + '\t' + (evTime - t0) + '\t' + ev.shapeType + '\t' + shapeNames[ev.shapeType] + '\t' + isTarget);
 			}
 			lines.push('');
@@ -702,7 +711,8 @@
 			events.push({
 				time: new Date(), 
 				shapeType: randInt,
-				event: "drawEvent"
+				event: "drawEvent",
+				isTarget: expectingClick === 1
 			})
 
 			switch(randInt) {
@@ -1117,7 +1127,7 @@
 			<div class="center" style="margin-top:20px;">
 				<button id="exportButton" onclick="exportResults()">Export as Text</button>
 			</div>
-			<p class="note">Note: Q-scores use approximate normative values and are not clinical-grade.</p>
+			<p class="note">Note: Q-scores based on QbCheck Technical Manual Rev F (2022) norms, adults 20-60. Movement metrics (distance, area) use pixel units.</p>
 		</div>
   </body>
 </html>

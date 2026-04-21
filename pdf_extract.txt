@@ -1,0 +1,1388 @@
+Total pages: 38
+=== PAGE 1 ===
+ 
+ 
+ 
+ 
+ 
+ 
+QbCheck Technical Manual  
+ 
+ 
+ 
+ 
+ 
+ 
+
+=== PAGE 2 ===
+ 
+2 
+QbCheck Technical Manual , Rev F  
+ 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+QbCheck Technical Manual  
+English - Rev F, December 2022  
+Copyright 2014 Qbtech AB, All Rights Reserved.  
+No part of this manual may be copied or distributed without written permission from Qbtech AB.  
+Contact regarding this manual should be directed to:  
+ 
+ 
+Qbtech AB  
+Cardellgatan 1  
+114 36 Stockholm, Sweden  
+Phone: +46 (0)8 790 50 01  
+info@qbtech.com  
+www.qbtech.com  
+
+=== PAGE 3 ===
+ 
+3 
+QbCheck Technical Manual , Rev F  
+ 
+  
+ 
+Contents  
+1. Introduction  ................................ ................................ ................................ ................................ ........  4 
+2. Device Description  ................................ ................................ ................................ ..............................  5 
+2.1 System Components  ................................ ................................ ................................ .....................  5 
+2.2. Intended Use  ................................ ................................ ................................ ................................  5 
+2.3. Indications for Use  ................................ ................................ ................................ .......................  5 
+2.4. Limitations ................................ ................................ ................................ ................................ .... 5 
+2.5. Contraindications  ................................ ................................ ................................ .........................  5 
+3. QbCheck Test Design ................................ ................................ ................................ ...........................  6 
+3.1. Continuous Performance Test  ................................ ................................ ................................ ..... 6 
+3.2. Activity Measurement  ................................ ................................ ................................ ..................  7 
+3.3. Test Duration  ................................ ................................ ................................ ...............................  7 
+4. QbCheck Measures and Variables  ................................ ................................ ................................ ...... 8 
+4.1. MicroEventsX  ................................ ................................ ................................ ...............................  8 
+4.2. Attention and Impulse Control Measures  ................................ ................................ ...................  8 
+4.2.1. Reaction Time  ................................ ................................ ................................ ...........................  8 
+4.2.2. Reaction Time Variation  ................................ ................................ ................................ ............  9 
+4.2.3. Normalized Variation  ................................ ................................ ................................ ................  9 
+4.2.4. Omission Error  ................................ ................................ ................................ ..........................  9 
+4.2.5. Commission Error  ................................ ................................ ................................ ....................  10 
+4.2.6. N ormalized Commission  ................................ ................................ ................................ .........  11 
+4.3. ADHD Total Symptom Score  ................................ ................................ ................................ ...... 11 
+4.4. ADHD Total Symptom Level  ................................ ................................ ................................ .......  12 
+4.5. Graphic Presentation of Data  ................................ ................................ ................................ .... 12 
+5. Clinical Performance  ................................ ................................ ................................ .........................  16 
+6. Description of the Norm Database  ................................ ................................ ................................ ... 22 
+6.1. Normative Sample  ................................ ................................ ................................ .....................  22 
+6.2. ADHD Normative Sample  ................................ ................................ ................................ ...........  28 
+7. Age and Gender Adjusted Standard Scores  ................................ ................................ ......................  30 
+8. References  ................................ ................................ ................................ ................................ ........  32 
+ 
+=== PAGE 4 ===
+ 
+4 
+QbCheck Technical Manual , Rev F  
+ 
+ 1. Introduction  
+QbCheck is a computer -administered test that objectively measures cognitive performance and 
+activity levels. The test provides data for the core signs of ADHD, that is, hyperactivity, impulsivity 
+and inattention. QbCheck combines a Contin uous Performance Test (CPT) with a motion tracking 
+system by use of a web camera. QbCheck is substantially equivalent to another test provided by 
+Qbtech called QbTest. They share the same principle documentation for the ability to be used to aid 
+profession als in the clinical assessment of ADHD and in the evaluation of treatment interventions in 
+patients with ADHD. QbCheck uses an identical test task and stimuli presentation as QbTest and 
+both tests should be interpreted by professionals. In order to simplif y the use and installation of the 
+test, QbCheck has been developed as an online test where the test taker uses the spacebar to 
+respond to targets and the test takers motor activity during the test is registered by the web camera. 
+With this online interface , together with a voucher testing functionality, QbCheck has the ability to 
+be performed in as well as outside the clinic setting, including educational and home settings.  
+The computerized CPT flashes different figures on the screen. There are two version s of the CPT, one 
+for children aged between 6 and 11 years and one for adolescents and adults aged between 12 and 
+60 years. In the child version, the child is instructed to respond by pressing the spacebar for one 
+figure but not the other (Go/No -Go with a 50 percent Target probability). In the adolescent/ adult 
+version, the responder is instructed to respond when two figures of identical shape and color 
+appears successively (unconditional identical pairs with a 25 percent Target probability).  
+The results fr om the test are presented as raw scores as well as Q -Scores and percentiles that are 
+calculated using an age and gender adjusted norm group. The percentile expresses (in percent) the 
+probability of a normative person to score lower than the test person. Co nsequently, a test -result 
+that ends up in the 93rd percentile shows that 93 percent of the normative group scores lower than 
+that test person. This corresponds to a standard deviation of 1.5 (Q -score).  
+In addition, QbCheck provides the interpreter of the test with an ADHD Symptom Level Score that 
+represents the likelihood for the test -taker to have a symptom level that resembles a group of 
+individuals with clinically diagnosed ADHD. The method used to calculate this score is logistic 
+regression analysis. T he normative data set consists of 1307 normatives of which 576 are children 
+and 731 are adolescents and adults as well as 221 individuals with diagnosed ADHD.  
+The data from QbCheck is presented as graphs and scores in a two -page report. The first page 
+cont ains the variable ADHD Total Symptom Score which is also presented as a QbCheck ADHD Total 
+Symptom Level. The page also contains a graphic representation of the test takers result, a graphic 
+representation of a norm group sample result and quantitative mea sures comparing the test taker’s 
+result to an age and gender adjusted norm group. Both the test takers result and the sample result 
+from the norm group are displayed in an Activity Graph and an Attention and Impulse Control -Graph 
+to facilitate visual compa rison. The second page of the report contains the QbCheck rating scale 
+result.  
+ 
+=== PAGE 5 ===
+ 
+5 
+QbCheck Technical Manual , Rev F  
+ 
+ 2. Device Description  
+2.1 System Components  
+ 
+The QbCheck system consists of the following components:  
+• QbCheck Software, accessed online and used to administer test and access the result  
+• User Manual  
+• Technical Manual (this document)  
+• QbCheck Voucher Testing Instructions  
+• QbCheck Behavior Observation Form  
+Access to a remote server that processes QbCheck data and generates test reports QbCheck also 
+requires usage of the user’s own computer with web camera.  
+ 
+2.2. Intended Use  
+ 
+QbCheck provides qualified professionals with objective measurements of hyperactivity, impulsivity, 
+and inattention to aid in the assessment of ADHD and in the evaluation of treatment interventions i n 
+patients with ADHD. QbCheck results should be interpreted only by qualified professionals.  
+ 
+2.3. Indications for Use  
+ 
+QbCheck is indicated to be used to aid in the assessment of ADHD and in the evaluation of treatment 
+interventions in patients with ADHD.  QbCheck results should be interpreted by qualified 
+professionals.  
+ 
+2.4. Limitations  
+ 
+QbCheck shall always be interpreted in combination with other clinically relevant information, such 
+as a clinical interview and/or standard symptom scales.  
+ 
+2.5. Contraindications  
+None known.  
+=== PAGE 6 ===
+ 
+6 
+QbCheck Technical Manual , Rev F  
+ 
+ 3. QbCheck Test Design  
+QbCheck combines a Continuous Performance Test (CPT) with a motion tracking system to provide 
+objective measures of attention, impulsivity and hyperactivity. The CPT design is identical to the 
+well-used  and documented QbTest. This section describes the rationale and design of the CPT and 
+the motion tracking system along with the clinical and technical backgrounds for the different test 
+parameters.  
+ 
+3.1. Continuous Performance Test  
+ 
+The aim of the CPT is  primarily to measure performance related to attention and impulsivity. 
+QbCheck comes in two separate versions to control for developmental differences in cognitive 
+abilities and performance on the CPT, as follows:  
+The QbCheck (6 -11 years) CPT involves the  rapid presentation of two types of stimuli; a grey circle, 
+and a grey circle with a cross over it. A stimulus is defined as a Target if it is a grey circle and it is 
+defined as a Non -target if it is a circle with a cross over it.  
+The QbCheck (12 -60 years)  CPT involves the rapid presentation of four types of stimuli; a red circle, a 
+blue circle, a red square, and a blue square. The CPT is based on the unconditional identical pairs 
+principle and a stimulus is defined as a Target if it is identical in shape a nd color to the stimulus 
+immediately preceding it (thus, the first stimulus cannot be a Target). A stimulus is defined as a 
+Nontarget if it is does not match the stimulus immediately preceding it.  
+The stimuli are presented on a computer screen at a rate of one stimulus every two seconds  
+(0.5 Hz). In QbCheck (6 -11) each stimulus is visible for 100 milliseconds and in QbCheck (1260) each 
+stimulus is visible for 200 milliseconds (see Figure 1). The total number of stimuli presented in 
+QbCheck (6 -11) is 450, with an equal number of Target and Non -Target stimuli. The total number of 
+stimuli presented in QbCheck (12 -60) is 600, with a 25 percent Target ratio. The order of the Targets 
+and Non -targets is randomized to prevent practice effects over multiple tr ials. 
+ 
+Figure 1. QbCheck timing  
+ 
+
+=== PAGE 7 ===
+ 
+7 
+QbCheck Technical Manual , Rev F  
+ 
+ In both versions, test takers are instructed to respond to a Target stimulus by pressing the spacebar 
+and to refrain from responding to Non -Target stimuli. The test taker’s response profile and any 
+errors are automatically  recorded and compared to a normative and clinical database to provide a 
+measure of the test -takers level of inattention and impulsivity as well as the likelihood of having a 
+symptom level that resembles a clinical group with ADHD.  
+To reduce the impact of confounding factors, such as problems with differentiating left from right 
+and dyslexia, the stimuli are presented in the centre of the screen and they consist of shapes rather 
+than numbers or letters. The CPT is designed to be simple with no changes in th e complexity during 
+test period since the objective is to measure changes in the test subject’s performance over time 
+rather than the reaction to changes in the task. It is the inconsistency of the performance that is 
+important, which is something that see ms quite unique to ADHD (27).  
+ 
+3.2. Activity Measurement  
+ 
+Activity levels provide important clinical information when discriminating ADHD from other 
+psychiatric disorders or normal controls both in children and adults (1, 28). Children with ADHD have 
+highe r activity levels than aged -matched controls. The most pronounced differences have been 
+observed during structured tasks that require the child to sit still and pay attention; the differences 
+are less apparent during various leisure activities (29). The Qb Check test situation simulates a 
+structured context and the process is standardized by combining activity recordings with the CPT 
+measurements.  
+In QbCheck, the activity is measured using  a webcam or other video camera. A motion tracking 
+algorithm is applie d to the video feed to track the test taker’s head movements during the test. The 
+test taker is not recorded, and no video of the test taker is created. Instead the test taker’s head 
+position is sampled and used to calculate his/her activity during QbCheck . 
+ 
+3.3. Test Duration  
+ 
+The test duration of QbCheck (6 -11) is 15 minutes and data from the whole duration of the test is 
+used to calculate the parameters. The test duration of QbCheck (12 -60) is 20 minutes, however, data 
+is only used from the last 15 minut es to calculate the parameters. Nevertheless, data is recorded and 
+presented on the report graphs for the entire 20 -minute test duration. The rationale behind 
+excluding the first five minutes from analysis is that many test takers have an inconsistent resp onse 
+style the first few minutes, which is believed to reflect a task -adaptation. This task -adaptation effect 
+is less prominent when test takers are retested, resulting in a relatively poor test -retest correlation 
+for the first five minutes; thus, excludin g the first five minutes increases the test -retest reliability. 
+However, qualitative information on test performance can still be gained from all quarters, including 
+the first one, by examining the graphs in the QbCheck report.  
+=== PAGE 8 ===
+ 
+8 
+QbCheck Technical Manual , Rev F  
+ 
+ 4. QbCheck Measures and Vari ables  
+4.1. MicroEventsX  
+ 
+Definition  
+MicroEventsX occurs when the tracking algorithm detects a position change of the test taker 
+head larger than one millimetre  on the x -axis since the last MicroEventsX . Movements of less 
+than one millimetre  on the x -axis is not register as a MicroEventsX  (see Figure 2). Movements 
+on the y -axis are disregarded.  
+Clinical considerations  
+A large number of MicroEventsX  indicate a high degree of activity. MicroEventsX quantifies how 
+active the participant is (i.e., the amplitude).  
+ 
+Parameter calculation  
+The number of MicroEventsX  is counted and rounded off to the nearest 100.  
+4.2. Attention and Impulse Control Measures  
+ 
+4.2.1. Reaction Time  
+ 
+Definition  
+Reaction Time  is the average time it takes for the test taker to press the spacebar after the stimuli 
+have been presented. The Reaction Time  is measured only when a correct button press is registered. 
+The reported time is m easured in milliseconds.  
+Clinical considerations  
+Reaction Time  reflects processing and execution (30, 31, 32, 33). Average response latency is 
+thought to measure the response preparation component of executive functions (34, 35).  
+Parameter calculation  
+If ri is the time elapsed between the presentation of a Target  on the computer screen and the 
+registration of a correct button press, then  
+       [ms]  
+where N Tc is the number of correct button presses.  
+  
+   
+   
+
+=== PAGE 9 ===
+ 
+9 
+QbCheck Technical Manual , Rev F  
+ 
+ 4.2.2. Reaction Time Variation  
+ 
+Definition  
+Reaction Time Variation  is the standard deviation of the Reaction Time . 
+Clinical considerations  
+Reaction Time Variation  provides a measure of the consistency (or inconsistency) of the Reaction 
+Time . A high degree of Reaction Time Variation  may reflect clinical difficulties with sustaining 
+attention, forgetfulness, disorganization, and careless errors (27).  
+ 
+Parameter calculation  
+The Reaction Time Variation  is measured in milliseconds and computed as:  
+ [ms]  
+where RT is the average Reaction Time , and N Tc is the number of correct button presses.  
+4.2.3. Normalized Variation  
+ 
+Definition  
+Normalized Variation  or NormVar  is the Reaction Time Variation  expressed in terms of Reaction 
+Time . 
+Clinical considerations  
+A slow mean Reaction Time  often produces greater variability (36). Normalized Variation  corrects 
+for this and should be considered a validity measure of the parameter Reaction Time Variation . As 
+such, a normal score on Normalized Variation  together with a hi gh score of Reaction Time Variation  
+indicates that the high Reaction Time variability is confounded by a slow mean Reaction Time . This 
+parameter is only used to calculate the ADHD Total Symptom Level  
+ 
+Parameter calculation  
+The parameter Normalized Variatio n expresses the variation as percent of the mean value.  
+                                                    ReactionTimeVar  
+Normalized Variation= 100 · ————————    [%]  
+                                                     ReactionTime  
+4.2.4. Omission Error   
+ 
+Definition  
+An Omission Error occurs when no response was registered for a Target stimulus (i.e., the spacebar 
+was not pressed when it should have been). An Omission Error is plotted in the ‘Attention and 
+
+=== PAGE 10 ===
+ 
+10 
+QbCheck Technical Manual , Rev F  
+ 
+ impulsivity graph’ as a black marker just above the x -axis at t he time when the Target was 
+overlooked.  
+Clinical considerations  
+Omission Errors reflect inattention and inability to remain focused on the task (37). A high level of 
+Omission Errors has been associated with selective attention and deficient arousal (38, 3 9, 40, 41, 
+42, 43 and 44).  
+Parameter calculation  
+The result is reported in percent. If NOm is the number of such errors, and NT is the number of 
+Target, then the reported Omission Error rate is:  
+                                         NOm  
+Omission Error = 100 · ————    [%]  
+                                         NT 
+4.2.5. Commission Error  
+ 
+Definition   
+ 
+Clinical considerations  
+Commission Errors measures impulsive behavior  (40, 41, 42, 43, 45, 46, 47, 48, 49, 50, 51, 52) and 
+are believed to result from the anticipatory or incomplete processing of the stimulus (50).  
+Parameter calculation  
+If NCm is the number of incorrect spacebar -presses, and NNT is the number of Non -Targets , then 
+the reported Commission Error rate is:  
+                                             NCm  
+Commission Error  = 100 · ———    [%]  
+                                             NNT 
+ 
+ 
+  
+A Commission Error occurs when a response is registered when the stimulus was a Non -Target 
+stimulus (i.e., the spacebar is pressed when it should not have been pressed). A Commission Error 
+plotted in the ‘Attention and impulsivity graph’ as a red circle at the height corresponding to the 
+reaction time, y -axis, and at the time into the test when the response was made, x -axis.  
+=== PAGE 11 ===
+ 
+11 
+QbCheck Technical Manual , Rev F  
+ 
+ 4.2.6. Normalized Commission  
+ 
+Definition  
+Normalized Commission or NormCommission is the proportion (ratio) of Commission Errors to 
+correct responses to the Targets. This measure is sensitive to changes in correct responses, that is, it 
+corrects the level of impulsive Commission Errors to differen t levels of inattention or passive 
+responding (Omission Errors).  
+ 
+This parameter is only used to calculate ADHD Total Symptom Score.  
+ 
+Clinical considerations  
+This parameter compares the rate of Commission Errors with the rate of correct Targets responses . 
+It provides an additional measure of impulsive performance. A high level of response rate increases 
+the probability to make Commission Errors whereas low level of responding would reduce the risk 
+to make Commission Errors.  
+The percentage of impulsive Com mission Errors as a measure of impulsivity alone may therefore be 
+less sensitive to an underlying clinical problem of impulsivity if the subject at the same time has low 
+response rate to Target due to inattention. Considering  the level of correct responses  in proportion 
+to the level of Commission Errors may reduce the risk of false negative results on impulsivity when 
+the response rate to Target is low. It may also to some degree reduce the risk of false positive 
+results on impulsivity when the correct resp onse rate is very high.  
+Parameter calculation  
+ 
+ 
+ 
+4.3. ADHD Total Symptom Score  
+ 
+QbCheck captures several measures related to the three core symptom areas of ADHD:  activity, 
+impulsivity  and attention. To predict an individual’s likelihood of having typical ADHD symptoms 
+based on these objective measures, the variable ADHD Total Symptom Score was developed. The 
+variable outcome can be found in the text paragraph of the QbCheck Result sect ion on the second 
+page of the QbCheck report.  
+The ADHD Total Symptom Score is based on a comparison between a group of normally developing 
+individuals and individuals with a clinical diagnosis of ADHD (53) and has been validated in an 
+external validation d ata set (54, 55). It is expressed as the likelihood for the test -taker to belong to 
+the clinical group. The principle QbCheck variables used in the comparison are MicroEventX, 
+
+=== PAGE 12 ===
+ 
+12 
+QbCheck Technical Manual , Rev F  
+ 
+ Omission Errors, Reaction Time, Reaction Time Variation, Normalized Reaction Tim e Variation, 
+Commission Errors and Normalized Commission. The method used to create the variable ADHD Total 
+Symptom Score is based on logistic regression. This variable can be used in the evaluation of 
+treatment interventions in test taker with ADHD (56).  
+The ADHD Total Symptom Score is expressed as a value from 0 to 100. A value below 10 indicates a 
+low risk for the test taker to belong to the clinical group. A value between 10 and 50 indicates an 
+elevated risk to belong to the clinical group and a value o f 50 and above indicates a high risk to 
+belong to the clinical group with increasing risk at higher values.  
+It is recommended to categorize the test -results in the “low risk” category versus “elevated/high 
+risk” category. Test -takers in the “elevated/high risk” category should be considered for further 
+assessment. If maximal specificity is needed (low likelihood of false positives) it is recommended to 
+use “high risk” as category for further assessment.  
+ 
+4.4. ADHD Total Symptom Level  
+ 
+This is a graphic representation of the ADHD Total Symptom Score transformed into a scale 
+representing the approximate prevalence of  ADHD symptoms in the general population. Through a 
+mathematical transformation of the QbCheck ADHD Total Symptom Score abo ut 80% of the general 
+population will display low symptom levels (green area), 13 % will display elevated symptom levels 
+(grey area) and 7 % will display high symptom levels (red area).Thus, the green area represents low 
+symptom levels, the grey area eleva ted symptom levels and the red area high symptom levels. The 
+test-takers symptom level (transformed ADHD Total Symptom Score) is displayed as a black marker.  
+ 
+4.5. Graphic Presentation of Data  
+ 
+Data from QbCheck is presented as graphs and scores in a two-page report. The first page contains 
+the variable ADHD Total Symptom Score that is also presented as a QbCheck ADHD Total Symptom 
+Level. In addition,  the report contains a graphic representation of the test takers result, a graphic 
+representation of a norm group sample result and quantitative measures comparing the test taker’s 
+result to an age and gender adjusted norm group. Below you can learn more on how variables are 
+graphically presented in the QbCheck report.  
+ 
+ 
+=== PAGE 13 ===
+ 
+13 
+QbCheck Technical Manual , Rev F  
+ 
+  
+First page of the QbCheck report  
+Activ ity Graph  
+The Activity Graph illustrates the test -takers head movements during the test. The path of the head 
+is broken down into four diagrams each representing one quartile of the test time duration. These 
+diagrams show the dynamics of activity over time . 
+Attention & Impulse Control Graph  
+The Attention & Impulse Control Graph contains information on several aspects of attention and 
+impulsivity. The horizontal axis (x -axis) is the test -time axis covering the duration of the test. The 
+vertical axis (y -axis)  shows the reaction time to both correct and incorrect responses. A correct 
+response to a stimulus  results in a green circle and an incorrect response results in a red square 
+(Commission Errors). The position of the green circles and red squares on the y -axis indicates the 
+reaction time for respective response. If the test taker has omitted to respond to a stimulus  
+(Omission Errors) a black bar is shown on the x -axis.  
+Quantitative Measure  
+In addition to the graphs on the first page of the report, the QbChec k result is also expressed as raw 
+scores, Q -Scores and percentiles for the variables MicroEventX, Commission Errors, Omission Errors, 
+Reaction Time and Reaction Time Variation. The Q -Scores and percentiles allow for comparison with 
+
+=== PAGE 14 ===
+ 
+14 
+QbCheck Technical Manual , Rev F  
+ 
+ the age and gender adjus ted norm group. A Q -Score of 1 is equivalent to 1 standard deviation from 
+norm and a result below 1 Q -Score is considered as a normal performance. The percentile expresses 
+(in percent) the probability of a normative person to score lower than the test take r. 
+QbCheck ADHD Total Symptom Score  
+The ADHD Total Symptom Score, displayed in the text paragraph of the QbCheck Result section, 
+predicts an individual’s likelihood of having typical ADHD symptoms. For further description of the 
+variable see chapter 4.3.  QbCheck ADHD Total Symptom Score.  
+ADHD Total Symptom Level  
+In order to visually present the test takers results compared to the overall population, the ADHD 
+Total Symptom Score is transformed and inserted into a graph, the ADHD Total Symptom Level. The 
+graph displays the normal distribution of ADHD core symptoms in the general population and how 
+the test takers result compares to this (displayed with a black arrow).  
+A score within the green area represents a low ADHD Total Symptom Level indicating, a low 
+likelihood that the test taker belongs to the ADHD group. A score within the red area represents a 
+high ADHD Total Symptom Level indicating a high likelihood, that the test taker belongs to the ADHD 
+group. A score within the grey area represents an elevate d ADHD Total Symptom Level indicating an 
+uncertain result with about equal likelihood for the test taker to belong to any of the two groups. 
+The areas in the graph correspond to: Low: 80%, Elevated: 13% and High 7% of the total population 
+based on ADHD Sym ptom Score cut -offs compared to the total population.  
+QbCheck Rating Scale Score  
+The second page of the report contains the QbCheck rating scale result. The QbCheck rating scale 
+adds a subjective perspective to the evaluation process. The scale is developed from the 18 
+questions in DSM -5,  describing patterns of behavior associated with ADHD. Each behavior is graded 
+as Never/ Rarely , Sometimes, Often and Very Often. On the report each behavior is displayed with 
+how the test taker, parent/guardian o r teacher rated the test taker.  
+ 
+ 
+ 
+ 
+ 
+ 
+=== PAGE 15 ===
+ 
+15 
+QbCheck Technical Manual , Rev F  
+ 
+ Second page of the report  
+ 
+Children, 6 -17 years, must present Often or Very Often on at least six symptoms in one or both 
+categories to display ADHD -like symptoms according to the DSM -5 criteria. Test takers 18 years and 
+older must present with at least five items rated Often or Very Often in one or both categories, to 
+display ADHD -like symptoms according to the DSM -5 criteria.  
+  
+
+=== PAGE 16 ===
+ 
+16 
+QbCheck Technical Manual , Rev F  
+ 
+ 5. Clinical Performance  
+Studies using the combined measurement of CPT and motion tra cking in children and adults have 
+shown that motor hyperactivity can be objectively measured (1, 2) and correlated with both 
+neuroanatomical and neurochemical changes in ADHD (3 -5). Validity studies with QbTest have 
+shown between 79 and 96 percent sensitiv ity (correct classification of participants with ADHD) and 
+between 81 and 94 percent specificity (correct classification of non -clinical participants) with good 
+test-retest reliability (6 -11). When being performed outside the clinic setting, QbCheck has sh own a 
+similar ability to discriminate between adolescents/adults and controls, with a sensitivity of 82.6% 
+and a specificity of 79.5% (12). A study in children and adolescents (13) showed a significant 
+improvement in diagnostic accuracy of ADHD when the Qb Test was added to the clinical process, 
+measured as clinical outcome after one year. In addition, several other studies (14 -26) have shown 
+that the QbTest can be used to aid qualified professionals in the evaluation of therapeutic and 
+treatment interventio ns in ADHD.  
+ 
+Below is a description of the clinical performance for QbTest in the evaluation of treatment 
+interventions specifically. Since QbCheck is substantially equivalent to QbTest, the same 
+documentation and restrictions for use below applies to QbC heck. However, the QbTest Total Score 
+that was used for QbTest to evaluate treatment effects in the registry study is not used in QbCheck. 
+The corresponding variable used in QbCheck is the ADHD Total Symptom Score. The two different 
+methods show high corre lations (Pearson correlations >0.8)  and equal Effect Sizes (1.04 and 1.06) 
+when used to evaluate treatment in patients with ADHD.  
+ 
+The intended use of QbCheck is to support qualified professional in the evaluation of treatment 
+interventions in ADHD is no t based on one specific prospective study. Instead it is based on collated 
+data from seven published clinical studies where QbTest has been used to evaluate different 
+treatment interventions and one registry study, specifically designed to compare QbTest w ith 
+clinically validated Rating Scales (RS) in the evaluation of treatment interventions. Two of the 
+published clinical studies evaluated the responsiveness of the test after single doses of central 
+stimulants (CS) and two other studies focused on the capa city of the test to measure effects over the 
+day for atomoxetine and CS (20,21,22 and 25)).  
+ 
+Three of the published studies and the registry study evaluated the Effect Size (ES) of different   
+treatment interventions measured by QbTest. Two of these studi es included a placebo control 
+group. In the first placebo -controlled study (14), with the objective to evaluate the effect of 
+atomoxetine by means of QbTest and clinical rating scales, 128 children with ADHD (mean age 9.0) 
+were randomized to treatment with  atomoxetine or placebo and followed for 8 weeks.  The per -
+protocol ES (Cohens d; small 0.2, moderate 0.5, and large 0.8) for the principal QbTest hyperactivity 
+variables (Time active, Distance, Area and Microevents) varied between 0.85 and 1.49. The 
+=== PAGE 17 ===
+ 
+17 
+QbCheck Technical Manual , Rev F  
+ 
+ corre sponding ES for the principle variables measuring inattention (Reaction Time Variation and 
+Omission Errors) were 1.24 and 0.8 respectively and the principle variable measuring impulsivity 
+(Commission Errors) showed an ES of 0.82. All changes from baseline were statistically significant.  In  
+the second placebo -controlled study (6), 36 medication -naïve children aged 9 - 14 years diagnosed 
+with ADHD were treated with methylphenidate, dexamphetamine and placebo for 3 weeks in a 
+cross -over fashion. Group -level a nalyses revealed a statistically significant overall treatment effect 
+for stimulant treatment compared to placebo with an ES of 0.62 measured by QbTest (partial eta -
+square; small 0.01, moderate 0.06 and large 0.14).  
+ 
+In a third study (26), QbTest was used  to evaluate the effect of 16 and 52 weeks of treatment with 
+methylphenidate in 23 adults. The ES (partial eta -square; small 0.01, moderate 0.06 and large 0.14) 
+for the different QbTest hyperactivity variables (Time active, Distance, Area and Microevents) varied 
+between 0.43 and 0.51. The ES for the variables measuring inattention (Reaction Time Variation and 
+Omission Errors) was 0.51 and 0.46 respectively and the principle variable measuring impulsivity 
+(Commission Errors) showed an ES of 0.28. Repeated me asure ANOVAS showed statistically 
+significant changes from baseline for all QbTest variables.  
+ 
+The registry study included consecutive patients, 42 children/adole -scents (mean age 11.5) and 73 
+adults (mean age 35), with QbTest and clinical Rating Scale (R S) data at baseline and after treatment 
+with central stimulants or atomoxetine. Time to follow up varied between 6 days and 10 weeks. The 
+ES (Cohens d; small 0.2, moderate 0.5, and large 0.8) for the QbTest Total Score (QbActivity+ 
+QbInattention + QbImpuls ivity)/3 and the RS Total score were 1.06 and 0.98 respectively.  Changes 
+from baseline were statistically significant for both methods. Time to follow up after treatment 
+initiation was 5 -6 weeks (10 weeks for atomoxetine treated patients) in the child/ado lescent cohort 
+and 6 to 65 days in the adult cohort. Of the 42 patients included from the child/adolescent cohort, 
+35 were male and 7 were female. The mean age was 11.5 years (8.5 -15.7). Diagnosis was according 
+the DSM -IV criteria and the baseline ADHD sym ptoms averaged 1.38 (SD = .36) on the ADHD items 
+with a three step Likert scale ranging from “0 - Does not apply” to  “2 -Definitely applies”. This 
+represents an at least moderately severity of ADHD. Of the 73 clinical patients included in the 
+analysis from the adult cohort, 32 were women and 41 were men. The mean age was 35 years (18.6 -
+54.1 years). Fifty -eight patients were diagnosed as ADHD combined subtype and 15 patients as 
+ADHD inattentive subtype. The baseline ADHD symptoms in this cohort had an average  of 1.95 (SD = 
+.45) on a four step Likert scale ranging from “0 - Never or seldom” to “3 - Very often”. This represents 
+an at least moderately severity of ADHD. Data on ethnicity and social economic status was not 
+collected in the two cohorts since this is n ot a routine at these clinical centres.  
+ 
+The child cohort consisted of a sample of Swedish children assessed for ADHD and the adult cohort 
+consisted of a sample of Dutch adults assessed for ADHD. It can thus be assumed that most of the 
+included patients w ere Caucasians.  
+  
+=== PAGE 18 ===
+ 
+18 
+QbCheck Technical Manual , Rev F  
+ 
+  
+ 
+  
+  
+  
+  
+ 
+ 
+ 
+ 
+Although the ES in the above studies all show large treatment effects they must be interpreted with 
+caution since two of the studies did not include a concurrent control arm.  
+ 
+In addition to the comparison of ES between QbTest and RS, correlations between QbTest based 
+treatment responses and RS based treatment responses were calculated in the registry st udy. In 
+several studies where rating scales has been used to evaluate treatment effects, a change of -30% in 
+ADHD RS total score has been used as a threshold for a meaningful response to treatment. It should 
+however be pointed out that this threshold has n othing to do with the imprecision of rating scales. 
+Rather, this threshold is based on clinical experience. The same logic can be used for QbTest. 
+Although the imprecision of QbTest has been defined to 0.36 Q -Scores, the Q -Score of - 0.5 is used 
+as a cut -off that defines a meaningful change from baseline. This cut off is based on clinical 
+experience and psychometric conventions. Consequently, the above clinically based thresholds for a 
+meaningful treatment effect were used when the correlation between QbTes t and RS was 
+evaluated. The figures and tables below show individual treatment responses, calculated response 
+rates as well as Negative Percent Agreement (NPA) and Positive Percent Agreement (PPA) with 
+Confidence Intervals (CI) for the two methods.  
+ 
+Pooled  Cohort Analysis:  
+ 
+ 
+Frequency of subjects in each cohort:  
+Cohort  Frequency  Percent  
+Adult  73 63.5  
+Child  42 36.5  
+Total  115 100.0  
+=== PAGE 19 ===
+ 
+19 
+QbCheck Technical Manual , Rev F  
+ 
+  
+ 
+Pooled Cohort Analysis Continued:  
+ 
+ 
+ RS Total Score    
+ Pooled Cohort  No 
+Improvement  Improvement  Total  
+QbTest Total 
+Score  No Improvement  23 14 37 
+Improvement  35 43 78 
+Total  58 57 115 
+NPA = 40    CI: 28 to 53  
+PPA  =  75    CI: 63 to 85     
+ 
+ 
+Child Cohort Analysis:  
+ 
+ 
+ 
+
+=== PAGE 20 ===
+ 
+20 
+QbCheck Technical Manual , Rev F  
+ 
+  RS Total Score    
+ Child Cohort  No 
+Improvement  Improvement  Total  
+QbTest Total 
+Score  No Improvement  5 3 8 
+Improvement  11 23 34 
+Total  16 26 42 
+NPA = 31    CI: 14 to 56  
+PPA  =  88    CI: 71 to 96     
+ 
+ 
+ 
+Adult Cohort Analysis:  
+ 
+ 
+ 
+ 
+  
+ 
+ RS Total Score    
+ Adult Cohort  No 
+Improvement  Improvement  Total  
+QbTest Total 
+Score  No Improvement  18 11 29 
+Improvement  24 20 44 
+Total  42 31 73 
+NPA = 43    CI: 29 to 58  
+PPA  =  65    CI: 47 to 79     
+
+=== PAGE 21 ===
+ 
+21 
+QbCheck Technical Manual , Rev F  
+ 
+ The registry study showed statistically significant but low correlations between QbTest and the  
+clinically validated rating scales (RS). Therefore  and in the absence of a well -defined gold standard 
+for the evaluation of treatment effects in ADHD, QbTest results should be complemented by a 
+clinical evaluation of the treatment effects to avoid the risk that QbTest results should indicate that 
+a treatm ent is ineffective when it is clinically effective and that QbTest results should indicate that a 
+treatment is effective when it is clinically ineffective.  
+  
+=== PAGE 22 ===
+ 
+22 
+QbCheck Technical Manual , Rev F  
+ 
+ 6. Description of the Norm Database  
+As mentioned earlier, QbCheck is substantially equivalent to a nother test provided by Qbtech called 
+QbTest. The two tests share the same principle documentation for the ability to be used to aid 
+professionals in the clinical assessment of ADHD and in the evaluation of treatment interventions in 
+patients with ADHD.  
+ 
+6.1. Normative Sample  
+ 
+Below is a description of the norm database that is used both for QbTest and QbCheck. A total of 
+1518 participants aged between six and 75 years were tested between 2003 and 2011 with the 
+objective to be included in the norm database for QbTest. Written or verbal consent was given by 
+all participants according to the existing guidelines for obtaining consent in each region. Written 
+consent from a caregiver was also obtained for all participants under the age of 18. Most 
+participants re ceived either a cinema ticket or a small monetary incentive (5€/test) for taking part. 
+The tests were performed in Sweden and in Germany from nine different regions:   
+  
+Uppsala (Sweden): 460 participants (age range 6 -13) were collected by the Department of 
+Psychology, University of Uppsala between 2003 and 2008. The participating children came from six 
+different schools situated in cities of different size and level of urbanization in cent ral Sweden. A 
+structured interview was used to determine the socio -economic status of the children, including 
+the parent ethnicity, parent marital status, possession of car in the household, and the children’s 
+leisure activities. Preliminary analyses showe d that the sample was representative of Swedish 
+demographics on these measures. Further information about parts of this sample can be found in 
+Brocki, et al. (60).  
+  
+Sävsjö (Sweden): 125 participants (age range 6 -7) were collected at eight different schoo ls in a 
+suburban community in the south of Sweden in 2003.  
+  
+Aachen (Germany):  20 participants (age range 8 -12) were collected by the Department of Child and 
+Adolescent Psychiatry, University Hospital of the RWTH Aachen in 2009.  
+  
+Marburg (Germany):  60 p articipants (age range 7 -57) were collected by the Department of Clinical 
+Psychology and Psychotherapy at the University of Marburg in 2009. The participants were recruited 
+by word -of-mouth, distribution of flyers, newspaper adverts and notices at pediatri cian practices, 
+supermarkets, youth clubs, and pharmacies.  
+  
+Karlstad (Sweden):  322 participants (age -range 13 -53) were collected by the Department of 
+Psychology, Karlstad University, Sweden during 2005 -2006. This sample consisted of participants 
+=== PAGE 23 ===
+ 
+23 
+QbCheck Technical Manual , Rev F  
+ 
+ from two primary schools, one high school, and two workplaces in western Sweden and employees/ 
+students at Karlstad University.   
+  
+Giessen (Germany):  80 participants (age -range 18 -50) were collected by the Centre for Psychiatry, 
+Justus Liebig University i n Giessen in 2009. The participants were recruited by flyers, newspaper 
+adverts, fliers at the university, word -of-mouth advertising, and by using an existing database with 
+healthy participants willing to participate in studies.   
+  
+Partille (Sweden): 350 participants (age -range 12 -19) were recruited from a Primary and a 
+Secondary school in Partille, located in western Sweden. The tests were collected in 2011. The area 
+was partly selected because of its ethnic and cultural representativeness of Sweden as a whole.   
+  
+Kungälv (Sweden): 46 participants (age -range 21 -66) were recruited at a health centre in Kungälv, 
+located in western Sweden. The subjects came from a range of socio -economic backgrounds and 
+had variable physical fitness.  
+  
+Mixed group (Sweden):  55 participants (age range 20 -75) from a range of backgrounds and ages 
+were recruited through word -of-mouth advertising in Stockholm, Gothenburg and Partille. They 
+consisted of university students (17 participants), IT engineers (2 participants), employee s at a 
+pharmaceutical company (8 participants), health care professionals (4 participants), university 
+teachers (9 participants), and school staff (15 participants).   
+  
+The same exclusion criteria were used across all the groups. Teacher ratings and self -rating scales 
+were completed by most  participants as part of a larger study. However, previous studies have 
+shown high variability between different informants in rating of symptoms and therefore these 
+ratings were not used to exclude individual participan ts from the norm database (61). Therefore, 
+only tests from participants with a known psychiatric diagnosis were discarded in the first round of 
+exclusions (2 participants). Four additional tests were excluded due to age above 60. Twenty -four 
+tests were exc luded due to technical problems with the equipment. In addition, a qualitative review 
+of all tests was performed to identify tests were the subject clearly had misunderstood or 
+malingered on the test. In total, 93 such tests were identified and discarded.   
+Thereafter, an analysis of extreme outliers was made on the remaining data to prevent extreme 
+cases influencing further statistical analyses. Tests with any variable score ≥3 times the interquartile 
+range (IQR) for respective age and gender group were ex cluded. In total, 74 tests were excluded 
+due to such an extreme outlier performance. Since no external exclusion criteria, by means of 
+teacher ratings and self -rating scales, were used to exclude tests, an Anomaly Detection procedure 
+was used to search for  unusual cases based on multivariate test scores. Tests with an Anomality 
+index ≥1.3 and with at least 6 parameters with Q -scores above 0 were analyzed for multivariate 
+extreme profiles. Of 32 such tests, 14 were discarded due to test profiles with very po or test 
+performance. In total, exclusions for univariate extreme outlier performances and multivariate 
+outlier profile represented 5.8 % of all performed tests.  
+  
+The remaining norm database consists of 1307 tests. Of these tests, 576 were performed with the 
+child version (6 -12 years) and 731 with the adolescent/adult version (12 -60 years). In total, 371 
+=== PAGE 24 ===
+ 
+24 
+QbCheck Technical Manual , Rev F  
+ 
+ adult tests (≥18 years old) were included in the norm database . For details on gender and age 
+distribution as well as mean and standard deviation for respective standard parameter in the norm 
+database, please see tables  below . 
+Age # Male  Female  
+6 148 62 86 
+7 57 32 25 
+8 55 22 33 
+9 72 31 41 
+10 65 27 38 
+11 55 28 27 
+12 124 60 64 
+Total  576 262 314 
+ 
+Table  1. Age and gender distribution in the QbTest (6 -12) norm group.  
+ 
+Age range  # Male  Female  
+12-13 129 63 66 
+14-15 149 76 73 
+16-17 82 33 49 
+18-19 63 32 31 
+20-24 61 37 24 
+25-29 62 29 33 
+30-39 71 36 35 
+40-60 114 54 60 
+Total  731 360 371 
+ 
+Table 2. Age and gender distribution in the QbTest (12 -60) norm group.  
+=== PAGE 25 ===
+ 
+25 
+QbCheck Technical Manual , Rev F  
+ 
+ Gender  Parameter  Mean / std  6 7-8 9-10 11-12 
+Male  Time Active  Mean  60,5  51,9  32,3  24,7  
+ Std 23,2  19,1  21,9  18,1  
+Distance (m)  Mean  22,8  18,5  12,6  9,6 
+ Std 13,1  9,3 8,7 5,0 
+Area  Mean  86,6  70,6  47,8  37,7  
+ Std 44,4  33,9  35,8  22,5  
+MicroEvents  Mean  13358  11477  7785  6179  
+ Std 5677  4462  4325  3219  
+Motion Simplicity  Mean  48,2  46,4  43,6  43,4  
+ Std 5,4 6,4 8,8 7,0 
+Omission Error  Mean  16,8  9,1 2,5 1,6 
+ Std 13,1  8,7 3,1 2,1 
+Commission Error  Mean  22,2  21,2  15,1  9,8 
+ Std 13,7  14,1  10,1  7,2 
+Error Rate  Mean  21,8  16,6  9,6 6,3 
+ Std 11,5  11,0  6,5 5,1 
+RT, no Outliers  Mean  582,2  519,7  419,6  395,3  
+ Std 86,8  88,7  67,1  51,8  
+RT Var, no 
+Outliers  Mean  214,8  167,9  116,6  102,4  
+ Std 60,3  49,0  29,4  21,3  
+Norm RT Var, 
+noOutliers  Mean  36,9  32,1  27,8  26,0  
+ Std 9,1 6,5 5,4 4,5 
+Female  Time Active  Mean  46,6  42,3  24,0  14,9  
+ Std 24,0  22,3  17,2  12,4  
+Distance (m)  Mean  17,3  14,5  8,9 6,7 
+ Std 10,5  7,7 4,9 3,6 
+Area  Mean  66,5  55,7  34,2  24,6  
+ Std 40,1  34,7  23,8  17,0  
+=== PAGE 26 ===
+ 
+26 
+QbCheck Technical Manual , Rev F  
+ 
+ MicroEvents  Mean  10404  9321  5934  4322  
+ Std 4882  4189  3022  2412  
+Motion Simplicity  Mean  45,5  45,8  43,8  41,9  
+ Std 9,3 7,2 8,6 8,4 
+Omission Error  Mean  13,6  7,0 1,6 1,0 
+ Std 11,4  7,2 2,0 1,3 
+Commission 
+Error  Mean  10,4  15,2  9,8 6,6 
+ Std 8,0 11,9  8,1 5,5 
+Error Rate  Mean  12,6  11,8  5,8 3,9 
+ Std 7,7 9,1 4,5 3,1 
+RT, no Outliers  Mean  660,7  486,6  445,7  399,2  
+ Std 102,6  74,6  70,5  50,7  
+RT Var, no 
+Outliers  Mean  205,5  139,1  111,0  94,2  
+ Std 48,3  34,3  25,6  24,2  
+Norm RT Var, 
+noOutliers  Mean  31,0  28,7  25,0  23,5  
+ Std 5,0 6,0 4,0 4,5 
+ 
+Table 3. Mean and standard deviation for the standard parameters in the QbTest (6 -12) norm group . 
+ 
+The parameters Distance,  Motion Simplicity, Error rate are used only in QbTest not in QbCheck.  
+ 
+ 
+Gender  Parameter  Mean / std  12-13 14-15 16-17 18-19 20-29 30-60 
+Male  Time Active  Mean  17,2  11,9  7,1 4,6 4,2 4,8 
+ Std 13,5  12,1  7,1 5,4 4,5 5,7 
+Distance (m)  Mean  6,8 6,1 4,5 3,7 3,4 3,3 
+ Std 3,4 4,1 2,1 1,5 1,4 1,5 
+Area  Mean  25,8  23,2  15,0  10,4  8,2 7,9 
+ Std 18,4  22,3  13,5  7,4 6,9 7,0 
+=== PAGE 27 ===
+ 
+27 
+QbCheck Technical Manual , Rev F  
+ 
+ MicroEvents  Mean  4406  3619  2478  1932  1768  1794  
+ Std 2459  2535  1557  1190  1086  1231  
+Motion 
+Simplicity  Mean  41,1  39,4  34,7  32,1  31,2  31,9  
+ Std 7,9 10,3  11,5  8,0 9,3 9,4 
+Omission Error  Mean  13,1  9,5 5,7 4,8 5,3 4,5 
+ Std 11,1  7,6 5,2 4,2 5,8 5,3 
+Commission 
+Error  Mean  1,9 1,9 1,3 ,7 ,7 ,7 
+ Std 1,4 1,6 1,0 ,7 ,7 ,7 
+Error Rate  Mean  4,7 3,8 2,4 1,8 1,8 1,7 
+ Std 3,4 2,6 1,7 1,3 1,8 1,5 
+RT, no Outliers  Mean  594,9  569,8  545,6  512,3  512,0  539,1  
+ Std 89,9  103,4  105,5  101,5  92,6  97,9  
+RT Var, no 
+Outliers  Mean  197,0  182,4  152,5  135,1  132,9  126,7  
+ Std 45,0  47,0  42,1  38,0  38,2  36,3  
+Norm RT Var, 
+noOutliers  Mean  33,2  32,1  27,8  26,2  25,9  23,8  
+ Std 6,3 6,2 5,1 4,9 5,5 6,2 
+Female  Time Active  Mean  10,5  9,9 5,0 8,0 3,4 3,7 
+ Std 9,4 8,5 5,8 7,7 4,8 4,3 
+Distance (m)  Mean  5,2 5,1 3,5 4,7 3,1 3,1 
+ Std 2,4 2,7 1,6 2,3 1,3 1,2 
+Area  Mean  18,1  18,7  10,8  16,1  6,6 7,5 
+ Std 13,3  15,6  9,0 12,1  6,2 5,9 
+MicroEvents  Mean  3320  3114  1934  2757  1614  1666  
+ Std 1834  1829  1273  1675  1118  989 
+Motion 
+Simplicity  Mean  40,8  42,3  36,4  40,1  30,5  33,2  
+ Std 8,8 9,9 9,5 11,2  8,3 9,0 
+Omission Error  Mean  9,8 10,6  6,7 7,3 3,6 3,8 
+=== PAGE 28 ===
+ 
+28 
+QbCheck Technical Manual , Rev F  
+ 
+  Std 9,1 9,3 5,9 7,4 4,8 4,7 
+Commission 
+Error  Mean  1,9 1,6 ,7 ,6 ,5 ,5 
+ Std 1,7 1,3 ,6 ,6 ,6 ,6 
+Error Rate  Mean  4,0 3,9 2,2 2,3 1,3 1,3 
+ Std 2,9 3,0 1,7 2,1 1,4 1,4 
+RT, no Outliers  Mean  588,7  569,1  557,6  548,1  519,4  569,4  
+ Std 97,2  103,8  74,7  79,6  98,7  99,4  
+RT Var, no 
+Outliers  Mean  186,9  175,8  153,8  148,2  123,8  132,5  
+ Std 48,2  47,6  35,4  35,8  33,7  39,9  
+Norm RT Var, 
+noOutliers  Mean  31,8  30,9  27,7  27,2  23,9  23,4  
+ Std 6,4 6,3 5,7 5,6 5,5 6,3 
+ 
+Table 4. Mean and standard deviation for the standard parameters in the QbTest (12 -60) norm group.  
+ 
+ 
+6.2. ADHD Normative Sample  
+ 
+To develop the variable ADHD Total Symptom Score, tests from the normative individuals described 
+above and a clinical sample of individuals diagnosed with ADHD were used. Below is a description of 
+the clinical sample called the ADHD normative population.  
+ 
+The child part of the ADHD normative population consists of 86 children aged 6.9 to 12.9 years, 
+diagnosed with Attention Deficit Hyperactivity Disorder according to the Diagnostic and Statistical 
+Manual of Mental Disorders (DSM -IV, 2004). The ADHD -group h ad been referred for 
+neuropsychiatric assessment to the Child Neuropsychiatric Clinic (CNC), a regional and national clinic 
+for ADHD and other neuropsychiatric disorders in Gothenburg, Sweden. The patients were included 
+if they were diagnosed with ADHD bas ed on a neuropsychiatric assessment that included 
+examination by child psychiatrist, psychologist and educationalist according to the Diagnostic and 
+Statistical Manual of Mental Disorders (DSM -IV, 2004). Patients with Mental Retardation, Autism 
+Spectrum Di sorders or other Pervasive Developmental Disorders as well as patients under 
+medication with central stimulants or atomoxetine at test occasion were excluded.  
+ 
+The adolescent/adult part of the ADHD normative population included 135 adolescents and adults 
+aged 12.5 to 53.3 years diagnosed with Attention Deficit Hyperactivity Disorder according to the 
+Diagnostic and Statistical Manual of Mental Disorders (DSM -IV, 2004). Diagnostic assessments for 
+ADHD were performed at three separate psychiatric clinics; the NU-Health Care in Västra Götaland, 
+=== PAGE 29 ===
+ 
+29 
+QbCheck Technical Manual , Rev F  
+ 
+ Sweden, the psychiatric division of the County Council of Värmland, Sweden and the Child 
+Neuropsychiatric Clinic (CNC), a regional and national clinic for ADHD and other neuropsychiatric 
+disorders in Gothenburg, Sweden. T he CNC included mainly adolescent patients (n=95) with a mean 
+age of 16.7 years. The two other clinics included mainly adult patients (n=55) with a mean age of 
+33.4. The diagnostic assessments were performed with similar neuropsychological procedures at th e 
+different psychiatric clinics and included for example tests of memory, executive functioning and 
+intelligence, interviews, observations and somatic examinations.  
+ 
+Patients from CNC (mainly adolescent group) were included if they were diagnosed with ADHD  as an 
+outcome of a neuropsychiatric assessment that included examination by child psychiatrist, 
+psychologist and educationalist. Patients with Mental Retardation, Autism Spectrum Disorders or 
+other Pervasive Developmental Disorders as well as patients und er medication with central 
+stimulants or atomoxetine at the test occasion were excluded. For the two adult ADHD -groups, the 
+inclusion criteria were diagnosis of ADHD according to DSM -IV, described chronic course of ADHD 
+symptomatology from childhood to adu lthood with some symptoms present before seven years of 
+age and continue to meet DSM -IV criteria at the time of assessment, accepted withdrawal of central 
+stimulant treatment 24 hours before testing. Exclusion criteria for this group were any clinically 
+unstable psychiatric condition including, but not limited to, acute mood disorder, acute bipolar 
+disorder, and acute obsessive -compulsive disorder (OCD) or anti -social personality disorder; central 
+stimulant treatment within 24 hours of participation and not  meeting the diagnostic criteria of 
+ADHD in DSM -IV. 
+ 
+ 
+ Age # Male  Female  
+6-8 23 16 7 
+9-11 48 37 11 
+12-14 39 30 9 
+15-17 39 25 14 
+18-30 39 19 20 
+31-60 33 13 20 
+Total  221 140 81 
+ 
+ 
+Table 5. Age and gender distribution for the QbCheck ADHD norm group  
+ 
+ 
+ 
+=== PAGE 30 ===
+ 
+30 
+QbCheck Technical Manual , Rev F  
+ 
+ 7. Age and Gender  Adjus ted Standa rd Scores  
+This section describes how raw scores from the normative reference population, described in the 
+previous chapter, have been converted into normalized standard scores. Although QbCheck 
+doesn’t utilize the child version of the test in individuals above 11 ye ars old, normative child tests 
+performed by individuals aged 12 have been used in the regression analysis of the child test in 
+order to secure adequate regression curves.  
+QbTest performance is associated with age and gender (60), though the age effects be come less 
+pronounced in adulthood. The association with age is illustrated in the figure 10 showing normative 
+raw-score data plotted against age for the QbTest parameter Distance  in males.  
+ 
+Figure 10 (left). Scatter plot for the QbTest parameter Distance in males aged 12 -60. Figure 11 
+(right). Regression line for the parameter Distance in men aged 12 -60. 
+ 
+One commonly used method to standardize a test is to calculate average scores and standard 
+deviations for specific age and gender groups. A disadvantage with that method is that it 
+results in sudden jumps in performance when the subject changes age -group. Also, the age 
+correlation becomes more static. A more elegant way to describe the age dependent 
+differences in performance is regression analysis. This h as the advantage that no age spans 
+needs to be defined. Instead the age dependent differences in performance are defined by the 
+regression line so that any expected variable could be calculated given a specific age.  
+Therefore, regression analysis has been  used in order to standardize the data in QbTest. The 
+use of a smooth regression line is especially important when multiple tests in a given patient 
+are performed over time. Figure 11 shows the curvilinear regression line for the QbTest 
+parameter Distance in males.  
+In general, performance tests tend to have dispersions from normality which needs to be 
+corrected for. In QbTest, the Box -Cox transformation (62) was used to address this issue since it is 
+a well -established method that for example has been used  in the Swedish weight and growth 
+curves (63).  
+
+=== PAGE 31 ===
+ 
+31 
+QbCheck Technical Manual , Rev F  
+ 
+ In the test reports, the standard score (Q -Score) shows the difference between the test -
+persons raw -score and the mean raw -score for the age and gender adjusted normative group 
+expressed as standard deviation.  Raw scores that are exactly equal to the mean for the 
+normative group is equivalent with a Q - Score of zero.  
+ 
+  
+=== PAGE 32 ===
+ 
+32 
+QbCheck Technical Manual , Rev F  
+ 
+ 8. References  
+1. Lis, S., Stein -en-Nosse, C., Kirsch, P., Gallhofer, B., Sammer, G., & Baer, N. (2010). Objective 
+measurement of motor activity during cognitive performance in adults with attention -
+deficit/ hyperactivity disorder. Acta Psychatrica Scandinavica, 122, 285 -294. 
+ 
+2. Teicher, M.H., Yutaka, I., Glod, C.A., & Barber, N.I. (1996). Objective measurement of 
+hyperactivity and attentional problems in ADHD. J. Am. Acad. Child Adolesc.Psychiatry, 35, 
+334-342.  
+ 
+3. Jucaite, A., Fernell, E., Halldin, C., Forsberg, H., & Farde, L.  (2005). Dopamine transporter 
+binding in male adolescents with ADHD: Association between striatal dopamine markers and 
+motor hyperactivity. Biol. Psychiatry, 57, 229 -238.  
+ 
+4. Teicher, M.H., Andersson, C.M., Polcari, A., Glod, C.A., Maas, L.C., & Renshaw, P.F . (2000) 
+Functional deficits in basal ganglia of children with attention -deficit/hyperactivity disorder 
+shown with functional magnetic resonance imaging relaxometry. Nature Medicine, 6, 470 -
+473.  
+ 
+5. Oades, R.D., Myint, A., Dauverman , M.R., Schimmelmann B.G. & Schwarz, M. (2010). 
+Attentiondeficit disorder (ADHD) and glial integrity: an exploration of associations of 
+cytokines and kynurenine metabolites with symptoms and attention. Behavioral and Brain 
+Functions, 6, 2 -19. 
+ 
+6. Sharma, A. &  Singh, B. (2009). Evaluation of the role of Qb testing in attention deficit 
+hyperactivity disorder. Archives of Disease in Childhood, 94, (Supplement 1):A72.  
+ 
+7. Ulberstad, F. (2012) Discriminant Validity for QbTest in children. Data on file  
+ 
+8. Ulberstad, F. (2012) Discriminant Validity for QbTest in adolescents. Data on file.  
+ 
+9. Ulberstad, F. (2012) Discriminant Validity for QbTest in an adult population. Data on file.  
+ 
+10. Ulberstad, F. (2012) Test -Retest Reliability for QbTest. Data on file.  
+ 
+11. Edebol, H., Helldin , L. & Norlander, T. (2011). Measuring adult attention deficit hyperactivity 
+disorder using a quantified behavior test. Licentiate thesis, Karlstad University.  
+ 
+12. Ulberstad, F., Boström, H., Chavanon, M. L., Knollman, M., Wiley, J., Christiansen, H., Thorel l, 
+L. B. (2020). Objective measurement of attention deficit hyperactivity disorder symptoms 
+outside the clinic using the QbCheck: Reliability and validity. International Journal of 
+Methods in Psychiatric Research. Advanced online publication doi: 10.1002/m pr.1822.  
+=== PAGE 33 ===
+ 
+33 
+QbCheck Technical Manual , Rev F  
+ 
+  
+13. Vogt, C., & Shameli, A. (2011). Assessments for attention -deficit hyperactivity disorder: use 
+of objective measurements The Psychiatrist, 35, 380 -383.  
+ 
+14. Ulberstad, F., Landgren, M., & Norlander, T. Objective registration of pharmacological 
+treatm ent effects in ADHD. Poster presented at the Swedish Society of Medicine Annual 
+Meeting; Dec 2004, Stockholm, Sweden.  
+ 
+15. Wehmeier, P.M., Schacht, A., Ulberstad, F., Lehmann, M., Schneider -Fresenius, C., Lehmkuhl, 
+G., Dittman, R.W., & Banaschewski, T. (2012) . Does atomoxetine improve executive function, 
+inhibitory control, and hyperactivity? Results from a placebo -controlled trial using 
+quantitative measurement technology. Journal of Clinical Psychopharmacology, 32, 653 -660.  
+ 
+16. Ulberstad, F., Knagenhjelm, P., &  Norlander, T. Objective description of cognitive/behavioral 
+phenotypes in ADHD and tracking of treatment effects using an artificial neural network 
+classifier. Poster presented at the 13th International Congress for Child and Adolescent 
+Psychiatry; August  26, 2007, Florens, Italy.  
+ 
+17. Heiser, P., Frey, J., Smidt, J., Sommerlad, C., Wehmeier, P.M., Hebebrand, J., & Remschmidt, 
+H. (2004). Objective measurement of hyperactivity, impulsivity, and inattention in children 
+with hyperkinetic disorders before and aft er treatment with methylphenidate. European 
+Child and Adolescent Psychiatry, 13, 100 -104.  
+ 
+18. Tabori -Kraft, J., Juul -Soerensen, M., Kaergaard, M., Dalsgaard., & Thomsen, P.H. (2007). Is 
+OPTAx  useful for monitoring the effect of stimulants on hyperactivity and inattention? 
+Eur.Child Adolescent Psychiatry, 16, 347 -351.  
+ 
+19. Gustafsson, P. et al. (2010) EPA supplementation improves teacher -rated behavior and 
+oppositional symptoms in children with AD HD, Acta Paediatrica, 99, 1540 -1549 . 
+ 
+20. Ahlqvist, J. et al. Effects of CBT on inattention, impulsivity and hyperactivity in children with 
+behavior problems. Poster presented at the 5th World Congress of Behavioral and Cognitive 
+Therapies; 11 -14 July, 2007, B arcelona, Spain.  
+ 
+21. Vogt, C., & Williams, T. (2011). Early Identification of Stimulant Treatment Responders, 
+Partial Responders and Non -Responders using Objective Measures in Children and 
+Adolescents with Hyperkinetic Disorder. Child and Adolescent Mental He alth, 16, 144 -149.  
+ 
+22. Wehmeier, P.M., Schacht, A., Wolff, C., Otto, W.R., Dittman, R.W., & Banaschewski, T.  
+(2011). Neuropsychological outcomes across the day in children with attention -
+deficit/hyperactivity disorder treated with Atomoxetine: Results from a  placebo -controlled 
+study using a computer -based continuous performance test combined with an infra -red 
+motion -tracking device. Journal of child and adolescent psychopharmacololgy, 21, 430 -444.  
+ 
+=== PAGE 34 ===
+ 
+34 
+QbCheck Technical Manual , Rev F  
+ 
+ 23. Gunther, T. et al. (2012) Modulation of Attention -Deficit/Hyp eractivity Disorder Symptoms 
+by Short - and Long -Acting Methylphenidate Over the Course of a Day. Journal of child and 
+adolescent psychopharmacology, 22, 1 -8.  
+ 
+24. Ginsberg, Y., Hirvikoski, T. & Grann, M. (2012) Long -term functional outcome in adult prison 
+inmates with ADHD receiving OROS -methylphenidate. Eur Arch Psychiatry Clin Neurosci, 
+Online First, 23 April 2012.  
+ 
+25. Wehmeier, P. et al. (2012) Does Stimulant Pretreatment Modify Atomoxetine Effects on 
+Core Symptoms of ADHD in Children Assessed by Quantitative  Measurement Technology?. 
+Journal of Attention Disorders, Online, 22 May 2012.  
+ 
+26. Edebol, H., Helldin, L., Norlander, T. (2013). The Weighted  Symptom Scale and Prediction of 
+ADHD in Adults - Objective Measures of Remission and Response to Treatment with 
+Methylphenidate. Clinical Practice & Epidemiology in Mental Health, 9, 171 -179 
+ 
+27. Ramtvedt, B.E., Røinås, E., Aabech, H.S. & Sundet, K.S. (2013). Clinical gains from including 
+both dextroamphetamine and methylphenidate in stimulant trials. Journal of Child and  
+Adolescent Psychopharmacology, 23, 1 -8. 
+ 
+28. Castellanos, F.X., Sonuga -Barke, E.J., Scheres, A., Di Martino A., Hyde, C,. & Walters J.R. 
+(2005). Varieties of attention -deficit/hyperactivity disorder -related intraindividual variability. 
+Biological Psychiatry, 57, 1416 -1423.  
+ 
+29. Halperin, J.M., Matier, K., Bedi, G., Sharma, V., & Newcorn, J. (1992). Specificity of 
+inattention, impulsivity, and hyperactivity to the diagnosis of attention -deficit hyperactivity 
+disorder. J. Am. Acad. Child Adolesc. Psychiatry, 31, 190 -196.  
+ 
+30. Porrino, L.J. & Behar, D. (1983). A naturalistic assessment of the motoractivity of hyperactive 
+boys I: comparison with normal controls. Arch Gen Psychiatry, 40, 681 -687.  
+ 
+31. Klorman, R. (1991). Cognitive event -related potentials in attention deficit d isorder. Journal 
+of Learning Disabilities, 24, 130 -140.  
+ 
+32. Satterfield, J.H., Schell, A.M., Nicholas, T.W., Satterfield, B.T., & Freese, T.E. (1990). 
+Ontogeny of selective attention effects on event -related potentials in attention -deficit 
+hyperactivity disorder and normal boys. Biological Psychiatry, 28, 879 -903.  
+ 
+33. Satterfield, J.H., Schell, A.M. & Nicholas, T. (1994). Preferential neural processing of 
+attended stimuli in attention -deficit hyperactivity disorder and normal boys. 
+Psychophysiology, 31, 1 -10. 
+ 
+34. Tannock, R. (1998). Attention deficit hyperactivity disorder: advances in cognitive, 
+neurobiological, and genetic research. Journal of Child Psychology and Psychiatry, 39, 65 -99. 
+ 
+=== PAGE 35 ===
+ 
+35 
+QbCheck Technical Manual , Rev F  
+ 
+ 35. Denckla, M. B. (1996). Research on executive fu nction in a neurodevelopmental context: 
+Application of clinical measures. Developmental Neuropsychology, 12, 5 –15. 
+ 
+36. Reader,M. J., Harris, E. L., Schuerholz, L. J., & Denckla, M. B. (1994). Attention deficit 
+hyperactivity disorder and executive dysfunction.  Developmental Neuropsychology, 10, 493 –
+512.  
+ 
+37. Salthouse, T.A. (1993). Attentional blocks are not responsible for age -related slowing. 
+Journal of Gerontology, 48, 263 -70. 
+ 
+38. Rosvold, H. E., Mirsky, A. F., Sarason, I., Bransome, E. D., & Beck, L. H. (1956). A continuous 
+performance test of brain damage. Journal of Consulting Psychology, 20, 343 –350.  
+ 
+39. Barkley, R. A. (1991). The ecological validity of laboratory and analogue assessment methods 
+of ADHD symptoms. Journal of Abnormal Child Psychology, 19, 149 -178.  
+ 
+40. Beale, I.L., Matthew, P.J., Oliver, S., & Cornballis, M. C. (1987). Performance of disabled and 
+normal readers on the Continuous Performance Test. Journal of Abnormal Child Psychology, 
+15, 229238.  
+ 
+41. Dougherty, D.M., Bjork, J.M., Marsh, D.M., & Moeller, F.G.  (2000). A comparison between 
+adults with conduct disorder and normal controls on a Continuous Performance Test: 
+Differences in impulsive response characteristics. Psychological Record, 50, 203 –219.  
+ 
+42. Dougherty, D. M., Moeller, F. G., Steinberg, J. L., Mars h, D. M., Hines, S. E., & Bjork, J. M. 
+(1999). Alcohol increases commission error rates for a Continuous Performance Test. 
+Alcoholism: Clinical & Experimental Research, 23, 1342 -1351.  
+ 
+43. Halperin, J.M., Wolf, L.E., Pascualvaca, D., Newcorn, J.H., Healey, J.M ., O’Brien, J.D., 
+Morganstein, A., & Young, J.G. (1988). Differential assessment of attention and impulsivity in 
+children. Journal of the American Academy of Child and Adolescent Psychiatry, 27, 326 –329.  
+ 
+44. Halperin, J.M., Wolf, L., Greenblatt, E.R., & Young , J.G. (1991). Subtype analysis of 
+commission errors on the Continuous Performance Test. Developmental Neuropsychology, 
+7, 207 –217.  
+ 
+45. O’Toole, K., Abramowitz, A., Morris, R., & Dulcan, M.K. (1997). Effects of methylphenidate 
+and nonverbal learning in children with attention -deficit hyperactivity disorder. Journal of 
+the American Academy of Child and Adolescent Psychiatry, 36, 531 –538.   
+ 
+46. Dougherty, D. M., Marsh, D. M., Moeller, F. G., Chokshi, R. V., & Rosen, V. C. (2000). The 
+effects of moderate and hi gh doses of alcohol on attention, impulsivity, discriminability, and 
+response bias in immediate and delayed memory task performance. Alcoholism: Clinical & 
+Experimental Research, 24, 1702 -1711.  
+ 
+=== PAGE 36 ===
+ 
+36 
+QbCheck Technical Manual , Rev F  
+ 
+ 47. Dougherty, D. M., Bjork, J. M., Moeller, F. G., Harper, R. A. , Marsh, D. M., Mathias, C. W., & 
+Swann, A. C. (2003).  Familial transmission of continuous performance test behavior: 
+Attentional and impulsive response characteristics. Journal of General Psychology, 130, 5 -21. 
+ 
+48. O’Dougherty, M., Neuchterlein, K. H., & Dr ew, B. (1984). Hyperactive and hypoxic children: 
+Signal detection, sustained attention, and behavior. Journal of Abnormal Psychology, 93, 
+178-191.  
+ 
+49. Smith, A., Kendrick, A., & Maben, A. (1992). Use and effects of food and drinks in relation to 
+daily rhythms  of mood and cognitive performance: Effects of caffeine, lunch and alcohol on 
+human performance, mood and cardiovascular function. Proceedings of the Nutrition 
+Society, 51, 325 -333.  
+ 
+50. Sostek, A. J., Buchsbaum, M. S., & Rapoport, J. L. (1980). Effects of amp hetamine on vigilance 
+performance in normal and hyperactive children. Journal of Abnormal Child Psychology, 8, 
+491-500.  
+ 
+51. Sykes, D. H., Douglas, V. I., Weiss, G., & Minde, K. K. (1971). Attention in hyperactive children 
+and the effect of methylphenidate (Ri talin). Journal of Child Psychology & Psychiatry, 12, 
+129-139.  
+ 
+52. Sykes, D. H., Douglas, V. I., & Morgenstern, G. (1973). Sustained attention in hyperactive 
+children. Journal of Child Psychology & Psychiatry, 14, 213 -220.  
+ 
+53. Wohlberg, G. W., & Kornetsky, C. (1 973). Sustained attention in remitted schizophrenics. 
+Archives of General Psychiatry, 28, 533 -537.  
+ 
+54. Boström H., Ulberstad F. Characteristics of the ADHD Total Symptom Scores in children and 
+adolescents/adults. Data on file  
+ 
+55. Boström H., Ulberstad F. Externa l validation of the ADHD Total Symptom Score in children 
+and adolescents/adults. Data on file.  
+ 
+56. Boström H., Ulberstad F. Properties of the ADHD Total Symptom Score in a specialist clinical 
+population.  
+ 
+57. Boström H., Ulberstad F. On the Interrelation between changes in QbTest Total Score and 
+the ADHD Total Symptom Score during follow up of medical treatment in ADHD. Data on file.  
+ 
+58. Boström H., Ulberstad F. Characterization  and external validation of the ADHD Core 
+Symptom Levels in children.  
+ 
+59. Boström H., Ulberstad F. Characterization and external validation of the ADHD Core 
+Symptom Levels in children.  
+ 
+=== PAGE 37 ===
+ 
+37 
+QbCheck Technical Manual , Rev F  
+ 
+ 60. Boström H., Ulberstad F. On the Interrelation between changes in QbTest T otal Score  and 
+the ADHD Total Symptom Score during follow up of medical treatment in ADHD. Data on file.  
+ 
+61. Brocki, K. C., Tillman, C.M. & Bohlin, G. (2010). CPT performance, motor activity, and 
+continuous relations to ADHD symptom domains: A developmental study. European Journal 
+of Developmental Psychology, 7, 178 -197.  
+ 
+62. Achenbach T.A., McConaughy S.H., & Howell C.T. (1987). Child/adolescent behavioural and 
+emotional problems: implications of cross -informant correlations for situational specificity. 
+Psycholo gical Bulletin, 101, 213 –32.  
+ 
+63. Box, George E. P.; Cox, D. R. (1964). An analysis of transformations. Journal of the Royal 
+Statistical Society Society Series B, 26, 211 –52.  
+ 
+64. J Karlberg, ZC Luo and K Albertsson -Wikland (2001). Body mass index reference valu es 
+(mean and SD) for Swedish Children, Acta Pædiatr, 90, 1427 - 1434.  
+ 
+ 
+ 
+  
+=== PAGE 38 ===
+ 
+38 
+QbCheck Technical Manual , Rev F  
+ 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Qbtech AB  
+Cardellgatan 1  
+114 36 Stockholm, Sweden  
+Phone: +46 (0)8 790 50 01  
+info@qbtech.com  
+www.qbtech.com  
+
