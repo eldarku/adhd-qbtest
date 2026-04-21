@@ -335,6 +335,99 @@
 			qctx.stroke();
 		}
 
+		function drawCumulativeDistancePlot(quarterStats) {
+			var c = document.getElementById('cumulativeDistancePlot');
+			if (!c) return;
+			var ctx2 = c.getContext('2d');
+			var w = c.width, h = c.height;
+			ctx2.clearRect(0, 0, w, h);
+
+			// Collect all movement points sorted by time
+			var allPoints = [];
+			for (var q = 0; q < 4; q++) {
+				allPoints = allPoints.concat(quarterStats[q].movementPoints);
+			}
+			allPoints.sort(function(a, b) { return a.t - b.t; });
+			if (allPoints.length < 2) return;
+
+			// Compute cumulative distance at each point
+			var cumDist = [0];
+			for (var i = 1; i < allPoints.length; i++) {
+				var dx = allPoints[i].x - allPoints[i-1].x;
+				var dy = allPoints[i].y - allPoints[i-1].y;
+				cumDist.push(cumDist[i-1] + Math.sqrt(dx*dx + dy*dy));
+			}
+			var maxDist = cumDist[cumDist.length - 1] || 1;
+
+			// Layout
+			var marginLeft = 50, marginRight = 20, marginTop = 10, marginBottom = 40;
+			var plotW = w - marginLeft - marginRight;
+			var plotH = h - marginTop - marginBottom;
+			var tStart = startTime.getTime();
+			var tEnd = tStart + timeLimit;
+			var tRange = tEnd - tStart || 1;
+
+			// Draw axes
+			ctx2.strokeStyle = '#000';
+			ctx2.lineWidth = 1;
+			ctx2.beginPath();
+			ctx2.moveTo(marginLeft, marginTop);
+			ctx2.lineTo(marginLeft, marginTop + plotH);
+			ctx2.lineTo(marginLeft + plotW, marginTop + plotH);
+			ctx2.stroke();
+
+			// Y-axis label
+			ctx2.save();
+			ctx2.font = '12px sans-serif';
+			ctx2.fillStyle = '#000';
+			ctx2.translate(14, marginTop + plotH / 2);
+			ctx2.rotate(-Math.PI / 2);
+			ctx2.textAlign = 'center';
+			ctx2.fillText('Distance', 0, 0);
+			ctx2.restore();
+
+			// Y-axis ticks (top and middle)
+			ctx2.strokeStyle = '#ccc';
+			ctx2.lineWidth = 0.5;
+			ctx2.beginPath();
+			ctx2.moveTo(marginLeft, marginTop);
+			ctx2.lineTo(marginLeft + plotW, marginTop);
+			ctx2.moveTo(marginLeft, marginTop + plotH / 2);
+			ctx2.lineTo(marginLeft + plotW, marginTop + plotH / 2);
+			ctx2.stroke();
+
+			// Quarter dividers and labels
+			ctx2.strokeStyle = '#000';
+			ctx2.lineWidth = 1;
+			ctx2.font = '12px sans-serif';
+			ctx2.textAlign = 'center';
+			ctx2.fillStyle = '#000';
+			for (var q = 0; q < 4; q++) {
+				var qX = marginLeft + (plotW * (q + 1)) / 4;
+				if (q < 3) {
+					ctx2.beginPath();
+					ctx2.moveTo(qX, marginTop);
+					ctx2.lineTo(qX, marginTop + plotH);
+					ctx2.stroke();
+				}
+				var labelX = marginLeft + (plotW * (q + 0.5)) / 4;
+				ctx2.fillText('Q' + (q + 1), labelX, marginTop + plotH + 15);
+				ctx2.fillText('A = ' + quarterStats[q].movement.distance + ' px', labelX, marginTop + plotH + 30);
+			}
+
+			// Draw cumulative distance line
+			ctx2.beginPath();
+			ctx2.strokeStyle = '#000';
+			ctx2.lineWidth = 1.5;
+			for (var i = 0; i < allPoints.length; i++) {
+				var px = marginLeft + ((allPoints[i].t - tStart) / tRange) * plotW;
+				var py = marginTop + plotH - (cumDist[i] / maxDist) * plotH;
+				if (i === 0) ctx2.moveTo(px, py);
+				else ctx2.lineTo(px, py);
+			}
+			ctx2.stroke();
+		}
+
 		function showResults() {
 			var resultsDiv = document.getElementById('results');
 			resultsDiv.style.display = 'block';
@@ -381,6 +474,7 @@
 				document.getElementById('surfaceQ' + (q+1)).textContent = 'O = ' + quarterStats[q].movement.surfaceArea + ' px\u00B2';
 				document.getElementById('distanceQ' + (q+1)).textContent = 'A = ' + quarterStats[q].movement.distance + ' px';
 			}
+			drawCumulativeDistancePlot(quarterStats);
 			// Q2-Q4 aggregates
 			var q234mv = {distance: 0, surfaceArea: 0, microMovements: 0, movementTimeSum: 0};
 			for (var q = 1; q < 4; q++) {
@@ -1115,6 +1209,9 @@
 				<div class="quarter-panel"><div id="distanceQ2" class="stat-label">A = 0 px</div></div>
 				<div class="quarter-panel"><div id="distanceQ3" class="stat-label">A = 0 px</div></div>
 				<div class="quarter-panel"><div id="distanceQ4" class="stat-label">A = 0 px</div></div>
+			</div>
+			<div style="margin: 20px auto; max-width: 700px;">
+				<canvas id="cumulativeDistancePlot" width="700" height="150"></canvas>
 			</div>
 			<h2>Attention &amp; Impulse Control</h2>
 			<div id="qbInattentionScore"></div>
