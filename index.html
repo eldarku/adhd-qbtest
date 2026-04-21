@@ -350,14 +350,14 @@
 			allPoints.sort(function(a, b) { return a.t - b.t; });
 			if (allPoints.length < 2) return;
 
-			// Compute cumulative distance at each point
-			var cumDist = [0];
+			// Compute frame-to-frame displacement at each point
+			var frameDist = [0];
 			for (var i = 1; i < allPoints.length; i++) {
 				var dx = allPoints[i].x - allPoints[i-1].x;
 				var dy = allPoints[i].y - allPoints[i-1].y;
-				cumDist.push(cumDist[i-1] + Math.sqrt(dx*dx + dy*dy));
+				frameDist.push(Math.sqrt(dx*dx + dy*dy));
 			}
-			var maxDist = cumDist[cumDist.length - 1] || 1;
+			var maxDist = Math.max.apply(null, frameDist) || 1;
 
 			// Layout
 			var marginLeft = 50, marginRight = 20, marginTop = 10, marginBottom = 40;
@@ -386,14 +386,12 @@
 			ctx2.fillText('Distance', 0, 0);
 			ctx2.restore();
 
-			// Y-axis ticks (top and middle)
+			// Y-axis ticks
 			ctx2.strokeStyle = '#ccc';
 			ctx2.lineWidth = 0.5;
 			ctx2.beginPath();
 			ctx2.moveTo(marginLeft, marginTop);
 			ctx2.lineTo(marginLeft + plotW, marginTop);
-			ctx2.moveTo(marginLeft, marginTop + plotH / 2);
-			ctx2.lineTo(marginLeft + plotW, marginTop + plotH / 2);
 			ctx2.stroke();
 
 			// Quarter dividers and labels
@@ -415,13 +413,13 @@
 				ctx2.fillText('A = ' + quarterStats[q].movement.distance + ' px', labelX, marginTop + plotH + 30);
 			}
 
-			// Draw cumulative distance line
+			// Draw instantaneous distance line
 			ctx2.beginPath();
 			ctx2.strokeStyle = '#000';
-			ctx2.lineWidth = 1.5;
+			ctx2.lineWidth = 1;
 			for (var i = 0; i < allPoints.length; i++) {
 				var px = marginLeft + ((allPoints[i].t - tStart) / tRange) * plotW;
-				var py = marginTop + plotH - (cumDist[i] / maxDist) * plotH;
+				var py = marginTop + plotH - (frameDist[i] / maxDist) * plotH;
 				if (i === 0) ctx2.moveTo(px, py);
 				else ctx2.lineTo(px, py);
 			}
