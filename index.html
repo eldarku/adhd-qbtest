@@ -51,6 +51,8 @@
 		var canvasSize = [200, 200];
 
 		var started = false;
+		var runId = 0;
+		var pendingTimeout = null;
 		var startTime = undefined;
 		var expectingClick = false;
 		var missedClicks = 0;
@@ -155,6 +157,9 @@
 		}
 
 		function init() {
+			if (started) return; // prevent double-click
+			runId++;
+			if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
 			clearVariables();
 			// Hide results from previous test
 			var resultsDiv = document.getElementById('results');
@@ -736,13 +741,14 @@
 		}
 
 		function main() {
+			var myRunId = runId;
 			if (endTest()) return;
 			let maxTimeout = 3000;
 			let minTimeout = 1000;
 			let randomTimeout = Math.floor(Math.random() * maxTimeout + minTimeout);
 			// draw a random shape
-			window.setTimeout(()=> {															
-				requestAnimationFrame(draw);
+			pendingTimeout = window.setTimeout(()=> {
+				if (runId !== myRunId) return; // stale loop, abort
 				let maxTimeout = 300;
 				let minTimeout = 600;
 				let randomTimeout = Math.floor(Math.random() * maxTimeout + minTimeout);
@@ -787,7 +793,8 @@
 			ctx.clearRect(0, 0, canvasSize[0], canvasSize[1]); // clear canvas
 		}
 
-		function draw() {	
+		function draw() {
+			if (!started) return;
 			startDelayTimer();			
 			if (expectingClick) {
 				missedClicks++;
