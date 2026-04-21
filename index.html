@@ -166,6 +166,8 @@
 				}
 			}
 			document.getElementById('canvas').style.display = 'block';
+			document.getElementById('webcamWrapper').style.display = '';
+			document.getElementById('movementWrapper').style.display = '';
 			// Clear movement canvas
 			var mvCtx = document.getElementById('movement').getContext('2d');
 			mvCtx.clearRect(0, 0, 640, 480);
@@ -213,6 +215,8 @@
 				window.setTimeout(function() {
 					started = false;
 					document.getElementById('canvas').style.display = 'none';
+					document.getElementById('webcamWrapper').style.display = 'none';
+					document.getElementById('movementWrapper').style.display = 'none';
 					showResults();
 				}, 500);
 				return true;
@@ -1077,8 +1081,8 @@
 	    </div>
 		<canvas id="canvas" height=200 width=200></canvas>
 		<!-- <button onclick="drawMovementGraphBackground()">test</button> -->
-		<p><center><canvas id="webcam" width=640 height=480></canvas></center></p>
-		<p><center><canvas id="movement" width=640 height=480></canvas></center></p>
+		<p id="webcamWrapper"><center><canvas id="webcam" width=640 height=480></canvas></center></p>
+		<p id="movementWrapper"><center><canvas id="movement" width=640 height=480></canvas></center></p>
 		<div id="results" style="display:none;">
 			<h2>Activity</h2>
 			<div id="qbActivityScore"></div>
