@@ -4,6 +4,14 @@ permalink: /index.html
 
 # ADHD QBTest Clone
 
+> **⚠️ WARNING: This is NOT a medical tool.**
+>
+> This project was built for educational and entertainment purposes only. It is **not** a validated diagnostic instrument and must **not** be used for clinical decision-making or self-diagnosis.
+>
+> **Practicing with this tool can compromise your real QBTest/QbCheck results.** The official QBTest relies on the task being unfamiliar — repeated exposure to the test format creates a learning effect that may invalidate your scores when you take the actual clinical assessment. If you have an upcoming QBTest evaluation, **do not use this tool**.
+>
+> If you suspect you have ADHD, please consult a qualified healthcare professional.
+
 A browser-based clone of the QBTest — a Continuous Performance Test (CPT) used in ADHD assessment. It simultaneously measures **attention**, **impulsivity**, and **motor activity** in a single session using only a webcam and keyboard/mouse.
 
 **Live demo:** [https://eldarku.github.io/adhd-qbtest/](https://eldarku.github.io/adhd-qbtest/)
