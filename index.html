@@ -749,6 +749,7 @@
 			// draw a random shape
 			pendingTimeout = window.setTimeout(()=> {
 				if (runId !== myRunId) return; // stale loop, abort
+				requestAnimationFrame(draw);
 				let maxTimeout = 300;
 				let minTimeout = 600;
 				let randomTimeout = Math.floor(Math.random() * maxTimeout + minTimeout);
