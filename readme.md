@@ -1,7 +1,3 @@
----
-permalink: /index.html
----
-
 # ADHD QBTest Clone
 
 > **⚠️ WARNING: This is NOT a medical tool.**
