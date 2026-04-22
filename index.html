@@ -362,7 +362,18 @@
 				var dy = allPoints[i].y - allPoints[i-1].y;
 				frameDist.push(Math.sqrt(dx*dx + dy*dy));
 			}
-			var maxDist = Math.max.apply(null, frameDist) || 1;
+			// Smooth frame distances with moving average
+			var windowSize = Math.max(1, Math.floor(frameDist.length / 80));
+			var smoothed = [];
+			for (var i = 0; i < frameDist.length; i++) {
+				var sum = 0, count = 0;
+				for (var j = Math.max(0, i - windowSize); j <= Math.min(frameDist.length - 1, i + windowSize); j++) {
+					sum += frameDist[j];
+					count++;
+				}
+				smoothed.push(sum / count);
+			}
+			var maxDist = Math.max.apply(null, smoothed) || 1;
 
 			// Layout
 			var marginLeft = 50, marginRight = 20, marginTop = 10, marginBottom = 40;
@@ -418,13 +429,13 @@
 				ctx2.fillText('A = ' + quarterStats[q].movement.distance + ' px', labelX, marginTop + plotH + 30);
 			}
 
-			// Draw instantaneous distance line
+			// Draw instantaneous distance line (smoothed)
 			ctx2.beginPath();
 			ctx2.strokeStyle = '#000';
 			ctx2.lineWidth = 1;
 			for (var i = 0; i < allPoints.length; i++) {
 				var px = marginLeft + ((allPoints[i].t - tStart) / tRange) * plotW;
-				var py = marginTop + plotH - (frameDist[i] / maxDist) * plotH;
+				var py = marginTop + plotH - (smoothed[i] / maxDist) * plotH;
 				if (i === 0) ctx2.moveTo(px, py);
 				else ctx2.lineTo(px, py);
 			}
