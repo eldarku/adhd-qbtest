@@ -608,6 +608,491 @@
 			return (str + Array(len+1).join(' ')).substring(0, len);
 		}
 
+		// ============ PARSE EXPORTED TXT FILE ============
+		function parseExportedResults(text) {
+			var lines = text.split('\n').map(function(l) { return l.trimRight(); });
+			var data = {};
+			// Test metadata
+			var testDateLine = lines.find(function(l) { return l.startsWith('Test date:'); });
+			data.testDate = testDateLine ? testDateLine.replace('Test date: ', '') : '';
+			var durationLine = lines.find(function(l) { return l.startsWith('Test duration:'); });
+			data.testDuration = durationLine ? durationLine.replace('Test duration: ', '') : '';
+			var epochLine = lines.find(function(l) { return l.startsWith('Test start (epoch ms):'); });
+			data.t0 = epochLine ? parseInt(epochLine.replace('Test start (epoch ms): ', '')) : 0;
+			var durMatch = data.testDuration.match(/([\d.]+)/);
+			data.timeLimit = durMatch ? parseFloat(durMatch[1]) * 60000 : 1200000;
+
+			// Composite Q-scores
+			data.composite = {};
+			lines.forEach(function(l) {
+				var m;
+				if ((m = l.match(/^(QbActivity|QbInattention|QbImpulsivity)\s+Q-score:\s+([-\d.]+)\s+Percentile:\s+(\d+)/))) {
+					data.composite[m[1]] = {qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+				}
+			});
+
+			// Activity table
+			data.activity = {};
+			var actSection = false;
+			lines.forEach(function(l) {
+				if (l.indexOf('=== Activity Results') >= 0) actSection = true;
+				if (actSection && l.indexOf('=== Attention') >= 0) actSection = false;
+				if (!actSection) return;
+				var m;
+				if ((m = l.match(/^Movement time\s+([\d.]+)%\s+([-\d.]+)\s+(\d+)/))) data.activity.movementTime = {value: m[1]+'%', qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+				if ((m = l.match(/^Distance\s+([\d.]+ px)\s+([-\d.]+)\s+(\d+)/))) data.activity.distance = {value: m[1], qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+				if ((m = l.match(/^Surface area\s+([\d.]+ px²?)\s+([-\d.]+)\s+(\d+)/))) data.activity.surfaceArea = {value: m[1], qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+				if ((m = l.match(/^Micro-movements\s+(\d+)\s+([-\d.]+)\s+(\d+)/))) data.activity.microMovements = {value: m[1], qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+			});
+
+			// Attention & Impulse table
+			data.attention = {};
+			data.impulse = {};
+			var attSection = false;
+			lines.forEach(function(l) {
+				if (l.indexOf('=== Attention & Impulse') >= 0) attSection = true;
+				if (attSection && l.indexOf('=== Per-Quarter') >= 0) attSection = false;
+				if (!attSection) return;
+				var m;
+				if ((m = l.match(/^RT variance\s+([\d.]+ ms)\s+([-\d.]+)\s+(\d+)/))) data.attention.rtVariance = {value: m[1], qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+				if ((m = l.match(/^Omission\s+([\d.]+%)\s+([-\d.]+)\s+(\d+)/))) data.attention.omission = {value: m[1], qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+				if ((m = l.match(/^Reaction time\s+([\d.]+ ms)\s+([-\d.]+)\s+(\d+)/))) data.attention.reactionTime = {value: m[1], qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+				if ((m = l.match(/^Norm\. variance\s+([\d.]+%)\s+([-\d.]+)\s+(\d+)/))) data.attention.normVariance = {value: m[1], qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+				if ((m = l.match(/^Commission error\s+([\d.]+%)\s+([-\d.]+)\s+(\d+)/))) data.impulse.commission = {value: m[1], qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+				if ((m = l.match(/^Error rate\s+([\d.]+%)\s+([-\d.]+)\s+(\d+)/))) data.impulse.errorRate = {value: m[1], qscore: parseFloat(m[2]), percentile: parseInt(m[3])};
+			});
+
+			// Per-quarter summary
+			data.quarters = [];
+			for (var qi = 1; qi <= 4; qi++) {
+				var qObj = {quarter: qi};
+				var qIdx = lines.findIndex(function(l) { return l.trim() === 'Q' + qi + ':'; });
+				if (qIdx >= 0) {
+					for (var j = qIdx + 1; j < Math.min(qIdx + 12, lines.length); j++) {
+						var l = lines[j].trim();
+						var m;
+						if ((m = l.match(/Distance:\s+([\d.]+)/))) qObj.distance = parseInt(m[1]);
+						if ((m = l.match(/Surface area:\s+([\d.]+)/))) qObj.surfaceArea = parseInt(m[1]);
+					}
+				}
+				data.quarters.push(qObj);
+			}
+
+			// Raw data: stimulus events
+			data.events = [];
+			var evIdx = lines.findIndex(function(l) { return l === '=== Stimulus Events ==='; });
+			if (evIdx >= 0) {
+				for (var i = evIdx + 2; i < lines.length; i++) {
+					if (lines[i] === '' || lines[i].startsWith('===')) break;
+					var parts = lines[i].split('\t');
+					if (parts.length >= 5) data.events.push({ts: parseInt(parts[0]), rel: parseInt(parts[1]), shapeIdx: parseInt(parts[2]), shape: parts[3], isTarget: parts[4] === '1'});
+				}
+			}
+
+			// Raw data: correct responses
+			data.correct = [];
+			var crIdx = lines.findIndex(function(l) { return l === '=== Correct Responses ==='; });
+			if (crIdx >= 0) {
+				for (var i = crIdx + 2; i < lines.length; i++) {
+					if (lines[i] === '' || lines[i].startsWith('===')) break;
+					var parts = lines[i].split('\t');
+					if (parts.length >= 3) data.correct.push({ts: parseInt(parts[0]), rel: parseInt(parts[1]), rt: parseInt(parts[2])});
+				}
+			}
+
+			// Raw data: commission errors
+			data.commissions = [];
+			var ceIdx = lines.findIndex(function(l) { return l === '=== Commission Errors ==='; });
+			if (ceIdx >= 0) {
+				for (var i = ceIdx + 2; i < lines.length; i++) {
+					if (lines[i] === '' || lines[i].startsWith('===')) break;
+					var parts = lines[i].split('\t');
+					if (parts.length >= 3) data.commissions.push({ts: parseInt(parts[0]), rel: parseInt(parts[1]), rt: parseInt(parts[2])});
+				}
+			}
+
+			// Raw data: anticipatory
+			data.anticipatory = [];
+			var antIdx = lines.findIndex(function(l) { return l === '=== Anticipatory Clicks ==='; });
+			if (antIdx >= 0) {
+				for (var i = antIdx + 2; i < lines.length; i++) {
+					if (lines[i] === '' || lines[i].startsWith('===')) break;
+					var parts = lines[i].split('\t');
+					if (parts.length >= 3) data.anticipatory.push({ts: parseInt(parts[0]), rel: parseInt(parts[1]), rt: parseInt(parts[2])});
+				}
+			}
+
+			// Raw data: omissions
+			data.omissions = [];
+			var omIdx = lines.findIndex(function(l) { return l === '=== Omissions ==='; });
+			if (omIdx >= 0) {
+				for (var i = omIdx + 2; i < lines.length; i++) {
+					if (lines[i] === '' || lines[i].startsWith('===')) break;
+					var parts = lines[i].split('\t');
+					if (parts.length >= 2) data.omissions.push({ts: parseInt(parts[0]), rel: parseInt(parts[1])});
+				}
+			}
+
+			// Raw data: head movement
+			data.movement = [];
+			var mvIdx = lines.findIndex(function(l) { return l === '=== Head Movement (per frame) ==='; });
+			if (mvIdx >= 0) {
+				for (var i = mvIdx + 2; i < lines.length; i++) {
+					if (lines[i] === '' || lines[i].startsWith('===')) break;
+					var parts = lines[i].split('\t');
+					if (parts.length >= 4) data.movement.push({t: parseInt(parts[0]), rel: parseInt(parts[1]), x: parseFloat(parts[2]), y: parseFloat(parts[3])});
+				}
+			}
+
+			return data;
+		}
+
+		// ============ RENDER LOADED RESULTS ============
+		function renderLoadedResults(data) {
+			document.getElementById('wrapper').style.display = 'none';
+			document.getElementById('canvas').style.display = 'none';
+			document.getElementById('webcamWrapper').style.display = 'none';
+			document.getElementById('movementWrapper').style.display = 'none';
+			document.getElementById('finalGraph').style.display = 'none';
+			var resultsDiv = document.getElementById('results');
+			resultsDiv.style.display = 'block';
+			// Hide comparison div if visible
+			var cmpDiv = document.getElementById('comparisonResults');
+			if (cmpDiv) cmpDiv.style.display = 'none';
+
+			// Composite Q-score bars
+			function compositeBar(label, qs, pct) {
+				return '<div class="composite-row"><span class="composite-label">' + label + '</span>' +
+					'<div class="qscore-bar-wrapper"><span class="qscore-end-label">-3</span>' + renderQScoreBar(qs) + '<span class="qscore-end-label">+3</span></div>' +
+					'<span class="composite-value">Q-score: <b>' + qs + '</b></span>' +
+					'<span class="composite-value">Percentile: <b>' + pct + '</b></span></div>';
+			}
+			document.getElementById('qbActivityScore').innerHTML = compositeBar('QbActivity', data.composite.QbActivity.qscore, data.composite.QbActivity.percentile);
+			document.getElementById('qbInattentionScore').innerHTML = compositeBar('QbInattention', data.composite.QbInattention.qscore, data.composite.QbInattention.percentile);
+			document.getElementById('qbImpulsivityScore').innerHTML = compositeBar('QbImpulsivity', data.composite.QbImpulsivity.qscore, data.composite.QbImpulsivity.percentile);
+
+			// Movement trajectory plots per quarter
+			var quarterDuration = data.timeLimit / 4;
+			var qMvPoints = [[], [], [], []];
+			for (var i = 0; i < data.movement.length; i++) {
+				var q = Math.min(3, Math.floor(data.movement[i].rel / quarterDuration));
+				qMvPoints[q].push(data.movement[i]);
+			}
+			var allMv = data.movement;
+			var globalBounds = null;
+			if (allMv.length >= 2) {
+				var xs = allMv.map(function(p){return p.x;}), ys = allMv.map(function(p){return p.y;});
+				globalBounds = {minX: Math.min.apply(null,xs), maxX: Math.max.apply(null,xs), minY: Math.min.apply(null,ys), maxY: Math.max.apply(null,ys)};
+			}
+			for (var q = 0; q < 4; q++) {
+				drawQuarterMovement('movementQ'+(q+1), qMvPoints[q], globalBounds);
+				document.getElementById('surfaceQ'+(q+1)).textContent = 'O = ' + (data.quarters[q].surfaceArea || 0) + ' px\u00B2';
+				document.getElementById('distanceQ'+(q+1)).textContent = 'A = ' + (data.quarters[q].distance || 0) + ' px';
+			}
+
+			// Cumulative distance plot
+			drawCumulativeDistancePlotFromData(data.movement, data.timeLimit, data.quarters);
+
+			// Activity table
+			function qRow(label, value, qscore, pctl) {
+				return '<tr><td>' + label + '</td><td>' + value + '</td><td>' + renderQScoreBar(qscore) + '</td><td>' + qscore + '</td><td>' + pctl + '</td></tr>';
+			}
+			var a = data.activity;
+			document.getElementById('activityTable').innerHTML =
+				'<tr><th>Metric</th><th>Result</th><th style="width:140px">-3 &nbsp;&nbsp; 0 &nbsp;&nbsp; +3</th><th>Q-score</th><th>Pctl</th></tr>' +
+				qRow('Movement time', a.movementTime.value, a.movementTime.qscore, a.movementTime.percentile) +
+				qRow('Distance', a.distance.value, a.distance.qscore, a.distance.percentile) +
+				qRow('Surface area', a.surfaceArea.value, a.surfaceArea.qscore, a.surfaceArea.percentile) +
+				qRow('Micro-movements', a.microMovements.value, a.microMovements.qscore, a.microMovements.percentile);
+
+			var att = data.attention, imp = data.impulse;
+			document.getElementById('attentionTable').innerHTML =
+				'<tr><th>Metric</th><th>Result</th><th style="width:140px">-3 &nbsp;&nbsp; 0 &nbsp;&nbsp; +3</th><th>Q-score</th><th>Pctl</th></tr>' +
+				'<tr><td colspan="5" style="background:#e8f5e9;font-weight:bold;font-size:12px">Attention</td></tr>' +
+				qRow('RT variance', att.rtVariance.value, att.rtVariance.qscore, att.rtVariance.percentile) +
+				qRow('Omission', att.omission.value, att.omission.qscore, att.omission.percentile) +
+				qRow('Reaction time', att.reactionTime.value, att.reactionTime.qscore, att.reactionTime.percentile) +
+				qRow('Norm. variance', att.normVariance.value, att.normVariance.qscore, att.normVariance.percentile) +
+				'<tr><td colspan="5" style="background:#fff3e0;font-weight:bold;font-size:12px">Impulse</td></tr>' +
+				qRow('Commission error', imp.commission.value, imp.commission.qscore, imp.commission.percentile) +
+				qRow('Error rate', imp.errorRate.value, imp.errorRate.qscore, imp.errorRate.percentile);
+
+			// Scatter plot
+			var totalMinutes = data.timeLimit / 60000;
+			var qMinutes = totalMinutes / 4;
+			var plotData = [
+				{x: data.correct.map(function(c){return c.rel/60000;}), y: data.correct.map(function(c){return c.rt;}), mode:'markers', type:'scatter', name:'Correct', marker:{color:'rgb(0,200,0)',symbol:'circle',size:8}},
+				{x: data.commissions.map(function(c){return c.rel/60000;}), y: data.commissions.map(function(c){return c.rt;}), mode:'markers', type:'scatter', name:'Commission error', marker:{color:'rgb(255,0,0)',symbol:'square',size:8}},
+				{x: data.anticipatory.map(function(c){return c.rel/60000;}), y: data.anticipatory.map(function(c){return c.rt;}), mode:'markers', type:'scatter', name:'Outlier', marker:{color:'rgb(0,0,0)',symbol:'circle',size:8}},
+				{x: data.omissions.map(function(c){return c.rel/60000;}), y: data.omissions.map(function(){return 0;}), mode:'markers', type:'scatter', name:'Omission', marker:{color:'rgb(0,0,0)',symbol:'line-ns',size:10,line:{width:2}}}
+			];
+			var shapes = [];
+			for (var i = 1; i < 4; i++) shapes.push({type:'line',x0:i*qMinutes,x1:i*qMinutes,y0:0,y1:1,yref:'paper',line:{color:'gray',width:1,dash:'dot'}});
+			shapes.push({type:'line',x0:0,x1:totalMinutes,y0:1000,y1:1000,line:{color:'gray',width:0.5,dash:'dash'}});
+			var annotations = [];
+			for (var i = 0; i < 4; i++) annotations.push({x:i*qMinutes+qMinutes/2,y:1.05,yref:'paper',text:'Q'+(i+1),showarrow:false,font:{size:12,color:'gray'}});
+			Plotly.newPlot('reactionTimePlot', plotData, {
+				margin:{t:30,b:50,l:60,r:20}, xaxis:{title:'Time (min)',range:[0,totalMinutes],dtick:qMinutes},
+				yaxis:{title:'Reaction time (ms)',rangemode:'tozero'}, shapes:shapes, annotations:annotations,
+				showlegend:true, legend:{orientation:'h',y:-0.2}
+			}, {responsive:true});
+
+			document.getElementById('wrapper').style.display = 'block';
+			document.getElementById('finalGraph').style.display = 'none';
+		}
+
+		// Distance plot from parsed data (reuses same algorithm)
+		function drawCumulativeDistancePlotFromData(movPoints, tLimit, quarters) {
+			var c = document.getElementById('cumulativeDistancePlot');
+			if (!c) return;
+			var ctx2 = c.getContext('2d');
+			var w = c.width, h = c.height;
+			ctx2.clearRect(0, 0, w, h);
+			if (movPoints.length < 2) return;
+
+			var frameDist = [0];
+			for (var i = 1; i < movPoints.length; i++) {
+				var dx = movPoints[i].x - movPoints[i-1].x;
+				var dy = movPoints[i].y - movPoints[i-1].y;
+				frameDist.push(Math.sqrt(dx*dx + dy*dy));
+			}
+			var windowSize = Math.max(1, Math.floor(frameDist.length / 80));
+			var smoothed = [];
+			for (var i = 0; i < frameDist.length; i++) {
+				var sum = 0, count = 0;
+				for (var j = Math.max(0, i - windowSize); j <= Math.min(frameDist.length - 1, i + windowSize); j++) { sum += frameDist[j]; count++; }
+				smoothed.push(sum / count);
+			}
+			var maxDist = Math.max.apply(null, smoothed) || 1;
+
+			var marginLeft = 50, marginRight = 20, marginTop = 10, marginBottom = 40;
+			var plotW = w - marginLeft - marginRight, plotH = h - marginTop - marginBottom;
+			var tRange = tLimit || 1;
+
+			ctx2.strokeStyle = '#000'; ctx2.lineWidth = 1;
+			ctx2.beginPath(); ctx2.moveTo(marginLeft, marginTop); ctx2.lineTo(marginLeft, marginTop + plotH); ctx2.lineTo(marginLeft + plotW, marginTop + plotH); ctx2.stroke();
+
+			ctx2.save(); ctx2.font = '12px sans-serif'; ctx2.fillStyle = '#000';
+			ctx2.translate(14, marginTop + plotH / 2); ctx2.rotate(-Math.PI / 2); ctx2.textAlign = 'center'; ctx2.fillText('Distance', 0, 0); ctx2.restore();
+
+			ctx2.strokeStyle = '#ccc'; ctx2.lineWidth = 0.5; ctx2.beginPath();
+			ctx2.moveTo(marginLeft, marginTop); ctx2.lineTo(marginLeft + plotW, marginTop); ctx2.stroke();
+
+			ctx2.strokeStyle = '#000'; ctx2.lineWidth = 1; ctx2.font = '12px sans-serif'; ctx2.textAlign = 'center'; ctx2.fillStyle = '#000';
+			for (var q = 0; q < 4; q++) {
+				var qX = marginLeft + (plotW * (q + 1)) / 4;
+				if (q < 3) { ctx2.beginPath(); ctx2.moveTo(qX, marginTop); ctx2.lineTo(qX, marginTop + plotH); ctx2.stroke(); }
+				var labelX = marginLeft + (plotW * (q + 0.5)) / 4;
+				ctx2.fillText('Q' + (q + 1), labelX, marginTop + plotH + 15);
+				ctx2.fillText('A = ' + (quarters[q].distance || quarters[q].movement && quarters[q].movement.distance || 0) + ' px', labelX, marginTop + plotH + 30);
+			}
+
+			ctx2.beginPath(); ctx2.strokeStyle = '#000'; ctx2.lineWidth = 1;
+			for (var i = 0; i < movPoints.length; i++) {
+				var px = marginLeft + (movPoints[i].rel / tRange) * plotW;
+				var py = marginTop + plotH - (smoothed[i] / maxDist) * plotH;
+				if (i === 0) ctx2.moveTo(px, py); else ctx2.lineTo(px, py);
+			}
+			ctx2.stroke();
+		}
+
+		// ============ LOAD RESULTS ============
+		function loadResults() {
+			var input = document.createElement('input');
+			input.type = 'file';
+			input.accept = '.txt';
+			input.onchange = function(e) {
+				var file = e.target.files[0];
+				if (!file) return;
+				var reader = new FileReader();
+				reader.onload = function(ev) {
+					var data = parseExportedResults(ev.target.result);
+					renderLoadedResults(data);
+				};
+				reader.readAsText(file);
+			};
+			input.click();
+		}
+
+		// ============ COMPARE RESULTS ============
+		function compareResults() {
+			var files = [];
+			function loadFile(idx) {
+				var input = document.createElement('input');
+				input.type = 'file';
+				input.accept = '.txt';
+				input.onchange = function(e) {
+					var file = e.target.files[0];
+					if (!file) return;
+					var reader = new FileReader();
+					reader.onload = function(ev) {
+						files[idx] = {name: file.name, data: parseExportedResults(ev.target.result)};
+						if (files.length === 2 && files[0] && files[1]) {
+							renderComparison(files[0].data, files[1].data);
+						}
+					};
+					reader.readAsText(file);
+				};
+				input.click();
+			}
+			alert('Select the FIRST test result file (Test 1)');
+			loadFile(0);
+			setTimeout(function() {
+				alert('Select the SECOND test result file (Test 2)');
+				loadFile(1);
+			}, 500);
+		}
+
+		function renderQScoreBarDual(qs1, qs2) {
+			var pct1 = ((qs1 + 3) / 6) * 100;
+			var pct2 = ((qs2 + 3) / 6) * 100;
+			pct1 = Math.max(0, Math.min(100, pct1));
+			pct2 = Math.max(0, Math.min(100, pct2));
+			return '<div class="qscore-bar"><div class="qscore-tick" style="left:50%"></div>' +
+				'<div class="qscore-marker qscore-marker-t1" style="left:' + pct1 + '%"></div>' +
+				'<div class="qscore-marker qscore-marker-t2" style="left:' + pct2 + '%"></div></div>';
+		}
+
+		function renderComparison(d1, d2) {
+			document.getElementById('wrapper').style.display = 'none';
+			document.getElementById('canvas').style.display = 'none';
+			document.getElementById('webcamWrapper').style.display = 'none';
+			document.getElementById('movementWrapper').style.display = 'none';
+			document.getElementById('finalGraph').style.display = 'none';
+			document.getElementById('results').style.display = 'none';
+
+			var div = document.getElementById('comparisonResults');
+			div.style.display = 'block';
+			div.innerHTML = '';
+
+			// Header
+			div.innerHTML += '<div style="text-align:center;margin-bottom:5px;font-size:12px;color:#666">' +
+				'<span style="margin-right:20px">&#9670; Test 1: ' + d1.testDate + '</span>' +
+				'<span>&#9671; Test 2: ' + d2.testDate + '</span></div>';
+
+			// === ACTIVITY SECTION ===
+			div.innerHTML += '<h2>Activity</h2>';
+
+			// Composite bar with dual markers
+			function compositeDualBar(label, qs1, pct1, qs2, pct2) {
+				return '<div class="composite-row"><span class="composite-label">' + label + '</span>' +
+					'<div class="qscore-bar-wrapper"><span class="qscore-end-label">-3</span>' + renderQScoreBarDual(qs1, qs2) + '<span class="qscore-end-label">+3</span></div>' +
+					'<span class="composite-value">Q-score: <b>' + qs1 + '</b> / <b>' + qs2 + '</b></span>' +
+					'<span class="composite-value">Pctl: <b>' + pct1 + '</b> / <b>' + pct2 + '</b></span></div>';
+			}
+			div.innerHTML += compositeDualBar('QbActivity', d1.composite.QbActivity.qscore, d1.composite.QbActivity.percentile, d2.composite.QbActivity.qscore, d2.composite.QbActivity.percentile);
+
+			// Side-by-side movement trajectories
+			div.innerHTML += '<div style="display:flex;justify-content:space-around;margin:15px 0">' +
+				'<div style="text-align:center"><b>Test 1</b><br><canvas id="cmpMvAll1" width="250" height="200"></canvas></div>' +
+				'<div style="text-align:center"><b>Test 2</b><br><canvas id="cmpMvAll2" width="250" height="200"></canvas></div></div>';
+
+			// Activity comparison table
+			div.innerHTML += '<table class="cmp-table"><tr><th rowspan="2">Metric</th><th colspan="2">Result</th><th colspan="2">Q-score</th><th colspan="2">Percentile</th></tr>' +
+				'<tr><th>Test 1</th><th>Test 2</th><th>Test 1</th><th>Test 2</th><th>Test 1</th><th>Test 2</th></tr>' +
+				cmpRow('Movement time', d1.activity.movementTime, d2.activity.movementTime) +
+				cmpRow('Distance', d1.activity.distance, d2.activity.distance) +
+				cmpRow('Surface area', d1.activity.surfaceArea, d2.activity.surfaceArea) +
+				cmpRow('Micro-movements', d1.activity.microMovements, d2.activity.microMovements) +
+				'</table>';
+
+			// === ATTENTION & IMPULSE SECTION ===
+			div.innerHTML += '<h2>Attention &amp; Impulse Control</h2>';
+			div.innerHTML += compositeDualBar('QbInattention', d1.composite.QbInattention.qscore, d1.composite.QbInattention.percentile, d2.composite.QbInattention.qscore, d2.composite.QbInattention.percentile);
+			div.innerHTML += compositeDualBar('QbImpulsivity', d1.composite.QbImpulsivity.qscore, d1.composite.QbImpulsivity.percentile, d2.composite.QbImpulsivity.qscore, d2.composite.QbImpulsivity.percentile);
+
+			// Side-by-side scatter plots
+			div.innerHTML += '<div style="display:flex;justify-content:space-around;margin:15px 0">' +
+				'<div style="flex:1"><div style="text-align:center"><b>Test 1</b></div><div id="cmpScatter1" style="width:100%;height:300px"></div></div>' +
+				'<div style="flex:1"><div style="text-align:center"><b>Test 2</b></div><div id="cmpScatter2" style="width:100%;height:300px"></div></div></div>';
+
+			// Attention & Impulse comparison table
+			div.innerHTML += '<table class="cmp-table">' +
+				'<tr><th rowspan="2">Metric</th><th colspan="2">Result</th><th colspan="2">Q-score</th><th colspan="2">Percentile</th></tr>' +
+				'<tr><th>Test 1</th><th>Test 2</th><th>Test 1</th><th>Test 2</th><th>Test 1</th><th>Test 2</th></tr>' +
+				'<tr><td colspan="7" style="background:#e8f5e9;font-weight:bold;font-size:12px">Attention</td></tr>' +
+				cmpRow('RT variance', d1.attention.rtVariance, d2.attention.rtVariance) +
+				cmpRow('Omission', d1.attention.omission, d2.attention.omission) +
+				cmpRow('Reaction time', d1.attention.reactionTime, d2.attention.reactionTime) +
+				cmpRow('Norm. variance', d1.attention.normVariance, d2.attention.normVariance) +
+				'<tr><td colspan="7" style="background:#fff3e0;font-weight:bold;font-size:12px">Impulse</td></tr>' +
+				cmpRow('Commission error', d1.impulse.commission, d2.impulse.commission) +
+				cmpRow('Error rate', d1.impulse.errorRate, d2.impulse.errorRate) +
+				'</table>';
+
+			// Back button
+			div.innerHTML += '<div class="center" style="margin-top:20px"><button id="exportButton" onclick="backToStart()">Back to Start</button></div>';
+			div.innerHTML += '<p class="note">Note: Q-scores based on QbCheck Technical Manual Rev F (2022) norms, adults 20-60.</p>';
+
+			// Draw movement trajectories on canvases
+			setTimeout(function() {
+				drawMovementOnCanvas('cmpMvAll1', d1.movement);
+				drawMovementOnCanvas('cmpMvAll2', d2.movement);
+				renderCmpScatter('cmpScatter1', d1);
+				renderCmpScatter('cmpScatter2', d2);
+			}, 50);
+
+			document.getElementById('wrapper').style.display = 'block';
+			document.getElementById('finalGraph').style.display = 'none';
+		}
+
+		function cmpRow(label, m1, m2) {
+			return '<tr><td>' + label + '</td><td>' + m1.value + '</td><td>' + m2.value + '</td>' +
+				'<td>' + m1.qscore + '</td><td>' + m2.qscore + '</td>' +
+				'<td>' + m1.percentile + '</td><td>' + m2.percentile + '</td></tr>';
+		}
+
+		function drawMovementOnCanvas(canvasId, movPoints) {
+			var c = document.getElementById(canvasId);
+			if (!c || movPoints.length < 2) return;
+			var ctx2 = c.getContext('2d');
+			var w = c.width, h = c.height;
+			ctx2.clearRect(0, 0, w, h);
+			// Crosshair
+			ctx2.beginPath(); ctx2.moveTo(0, h/2); ctx2.lineTo(w, h/2);
+			ctx2.moveTo(w/2, 0); ctx2.lineTo(w/2, h); ctx2.lineWidth = 0.5; ctx2.strokeStyle = '#ccc'; ctx2.stroke();
+			var xs = movPoints.map(function(p){return p.x;}), ys = movPoints.map(function(p){return p.y;});
+			var minX = Math.min.apply(null,xs), maxX = Math.max.apply(null,xs);
+			var minY = Math.min.apply(null,ys), maxY = Math.max.apply(null,ys);
+			var rangeX = maxX - minX || 1, rangeY = maxY - minY || 1;
+			var margin = 10;
+			ctx2.beginPath();
+			for (var i = 0; i < movPoints.length; i++) {
+				var px = margin + ((movPoints[i].x - minX) / rangeX) * (w - 2*margin);
+				var py = margin + ((movPoints[i].y - minY) / rangeY) * (h - 2*margin);
+				if (i === 0) ctx2.moveTo(px, py); else ctx2.lineTo(px, py);
+			}
+			ctx2.lineWidth = 0.5; ctx2.strokeStyle = 'rgba(0,0,0,0.6)'; ctx2.stroke();
+		}
+
+		function renderCmpScatter(divId, data) {
+			var totalMinutes = data.timeLimit / 60000;
+			var qMinutes = totalMinutes / 4;
+			var plotData = [
+				{x: data.correct.map(function(c){return c.rel/60000;}), y: data.correct.map(function(c){return c.rt;}), mode:'markers', type:'scatter', name:'Correct', marker:{color:'rgb(0,200,0)',symbol:'circle',size:6}},
+				{x: data.commissions.map(function(c){return c.rel/60000;}), y: data.commissions.map(function(c){return c.rt;}), mode:'markers', type:'scatter', name:'Commission', marker:{color:'rgb(255,0,0)',symbol:'square',size:6}},
+				{x: data.anticipatory.map(function(c){return c.rel/60000;}), y: data.anticipatory.map(function(c){return c.rt;}), mode:'markers', type:'scatter', name:'Outlier', marker:{color:'rgb(0,0,0)',symbol:'circle',size:6}},
+				{x: data.omissions.map(function(c){return c.rel/60000;}), y: data.omissions.map(function(){return 0;}), mode:'markers', type:'scatter', name:'Omission', marker:{color:'rgb(0,0,0)',symbol:'line-ns',size:8,line:{width:2}}}
+			];
+			var shapes = [];
+			for (var i = 1; i < 4; i++) shapes.push({type:'line',x0:i*qMinutes,x1:i*qMinutes,y0:0,y1:1,yref:'paper',line:{color:'gray',width:1,dash:'dot'}});
+			shapes.push({type:'line',x0:0,x1:totalMinutes,y0:1000,y1:1000,line:{color:'gray',width:0.5,dash:'dash'}});
+			var annotations = [];
+			for (var i = 0; i < 4; i++) annotations.push({x:i*qMinutes+qMinutes/2,y:1.05,yref:'paper',text:'Q'+(i+1),showarrow:false,font:{size:11,color:'gray'}});
+			Plotly.newPlot(divId, plotData, {
+				margin:{t:20,b:40,l:50,r:10}, xaxis:{title:'Time (min)',range:[0,totalMinutes],dtick:qMinutes},
+				yaxis:{title:'RT (ms)',rangemode:'tozero'}, shapes:shapes, annotations:annotations,
+				showlegend:false
+			}, {responsive:true});
+		}
+
+		function backToStart() {
+			document.getElementById('comparisonResults').style.display = 'none';
+			document.getElementById('results').style.display = 'none';
+			document.getElementById('wrapper').style.display = 'block';
+			document.getElementById('finalGraph').style.display = 'none';
+		}
+
 		function exportResults() {
 			var qs = window._quarterStats;
 			var att = window._overallAtt;
@@ -1143,6 +1628,35 @@
 			border-top: 7px solid #d32f2f;
 			transform: translateX(-5px);
 		}
+		.qscore-marker-t1 {
+			border-top-color: #d32f2f;
+		}
+		.qscore-marker-t2 {
+			border-top-color: #d32f2f;
+			top: auto;
+			bottom: -3px;
+			border-top: none;
+			border-bottom: 7px solid #1565c0;
+			border-left: 5px solid transparent;
+			border-right: 5px solid transparent;
+		}
+		.cmp-table {
+			width: 100%;
+			border-collapse: collapse;
+			font-size: 13px;
+			margin: 10px 0;
+		}
+		.cmp-table th, .cmp-table td {
+			border: 1px solid #ddd;
+			padding: 4px 8px;
+			text-align: center;
+		}
+		.cmp-table th {
+			background: #f5f5f5;
+		}
+		.cmp-table td:first-child {
+			text-align: left;
+		}
 		.qscore-tick {
 			position: absolute;
 			top: 0;
@@ -1191,6 +1705,10 @@
 			</div>
 			<div id="startButtonDiv" class="center">
 				<button id="startButton" onclick="init()">Start</button>
+			</div>
+			<div class="center" style="margin-top:10px;display:flex;justify-content:center;gap:10px;">
+				<button id="exportButton" onclick="loadResults()">Load Results</button>
+				<button id="exportButton" onclick="compareResults()">Compare Results</button>
 			</div>
 			<div id="finalGraph" style="margin: 50px auto; width:600px;height:250px;"></div>
 	    </div>
@@ -1251,5 +1769,6 @@
 			</div>
 			<p class="note">Note: Q-scores based on QbCheck Technical Manual Rev F (2022) norms, adults 20-60. Movement metrics (distance, area) use pixel units.</p>
 		</div>
+		<div id="comparisonResults" style="display:none; max-width:900px; margin:0 auto; padding:20px; font-family:'Open Sans',sans-serif;"></div>
   </body>
 </html>
