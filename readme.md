@@ -94,6 +94,17 @@ Three composite scores summarize overall performance:
 
 ## Usage
 
+### Before Starting
+
+- Enter **full-screen mode** (F11 in most browsers) to minimize distractions
+- Close all other tabs, notifications, and applications
+- Disable system notification sounds and pop-ups
+- Sit in a quiet room with consistent lighting
+- Position yourself at a comfortable distance from the screen with the webcam facing you
+- Do not use timers, alarms, or clocks visible on screen during the test
+
+### Running the Test
+
 1. Open the page and allow webcam access
 2. Set test duration (default: 20 minutes)
 3. Click **Start**
