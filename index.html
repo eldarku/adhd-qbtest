@@ -605,6 +605,102 @@
 			};
 			document.getElementById('wrapper').style.display = 'block';
 			document.getElementById('finalGraph').style.display = 'none';
+
+			// Per-quarter breakdown
+			renderPerQuarterBreakdown(quarterStats);
+		}
+
+		function renderPerQuarterBreakdown(quarterStats) {
+			// Compute per-quarter Q-scores for all metrics
+			var qScoresPerQ = [];
+			for (var q = 0; q < 4; q++) {
+				var mv = quarterStats[q].movement;
+				var att = quarterStats[q].attention;
+				qScoresPerQ.push({
+					// Activity
+					movementTime: computeQScore(parseFloat(mv.movementTime), NORMATIVE.movementTime),
+					distance: computeQScore(mv.distance, NORMATIVE.distance),
+					surfaceArea: computeQScore(mv.surfaceArea, NORMATIVE.surfaceArea),
+					microMovements: computeQScore(mv.microMovements, NORMATIVE.microMovements),
+					// Attention
+					rtVariance: computeQScore(att.reactionTimeVar, NORMATIVE.rtVariance),
+					omission: computeQScore(parseFloat(att.omissionPct), NORMATIVE.omission),
+					reactionTime: computeQScore(att.reactionTime, NORMATIVE.reactionTime),
+					normVariance: computeQScore(parseFloat(att.normVar), NORMATIVE.normVariance),
+					// Impulse
+					commission: computeQScore(parseFloat(att.commissionPct), NORMATIVE.commission),
+					errorRate: computeQScore(parseFloat(att.errorRate), NORMATIVE.errorRate)
+				});
+			}
+
+			var qs = ['Q1','Q2','Q3','Q4'];
+			var chartLayout = {margin:{t:10,b:30,l:40,r:10}, xaxis:{tickvals:[0,1,2,3],ticktext:qs}, yaxis:{title:'Q-score',range:[-3.5,3.5],dtick:1.5,zeroline:true}, showlegend:true, legend:{orientation:'h',y:-0.25,font:{size:10}}};
+
+			// --- Activity chart ---
+			var actTraces = [
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.microMovements.qscore;}), mode:'lines+markers', name:'Micro-mov.', marker:{symbol:'triangle-up',size:8}},
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.distance.qscore;}), mode:'lines+markers', name:'Distance', marker:{symbol:'triangle-down',size:8}},
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.surfaceArea.qscore;}), mode:'lines+markers', name:'Surface', marker:{symbol:'square',size:8}},
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.movementTime.qscore;}), mode:'lines+markers', name:'Mov. time', marker:{symbol:'circle',size:8}}
+			];
+			Plotly.newPlot('activityQChart', actTraces, chartLayout, {responsive:true});
+
+			// --- Activity table ---
+			var actMetrics = [
+				{key:'microMovements', label:'Micro-mov.', valFn:function(q){return quarterStats[q].movement.microMovements;}},
+				{key:'distance', label:'Distance', valFn:function(q){return quarterStats[q].movement.distance + ' px';}},
+				{key:'surfaceArea', label:'Surface area', valFn:function(q){return quarterStats[q].movement.surfaceArea + ' px\u00B2';}},
+				{key:'movementTime', label:'Mov. time', valFn:function(q){return quarterStats[q].movement.movementTime + '%';}}
+			];
+			document.getElementById('activityQTable').innerHTML = buildQTable(actMetrics, qScoresPerQ);
+
+			// --- Attention chart ---
+			var attTraces = [
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.omission.qscore;}), mode:'lines+markers', name:'Omission', marker:{symbol:'triangle-up',size:8}},
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.rtVariance.qscore;}), mode:'lines+markers', name:'RT var.', marker:{symbol:'triangle-down',size:8}},
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.reactionTime.qscore;}), mode:'lines+markers', name:'RT', marker:{symbol:'square',size:8}},
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.normVariance.qscore;}), mode:'lines+markers', name:'Norm. var.', marker:{symbol:'diamond',size:8}}
+			];
+			Plotly.newPlot('attentionQChart', attTraces, chartLayout, {responsive:true});
+
+			// --- Attention table ---
+			var attMetrics = [
+				{key:'omission', label:'Omission', valFn:function(q){return quarterStats[q].attention.omissionPct + '%';}},
+				{key:'rtVariance', label:'RT variance', valFn:function(q){return quarterStats[q].attention.reactionTimeVar + ' ms';}},
+				{key:'reactionTime', label:'Reaction time', valFn:function(q){return quarterStats[q].attention.reactionTime + ' ms';}},
+				{key:'normVariance', label:'Norm. var.', valFn:function(q){return quarterStats[q].attention.normVar + '%';}}
+			];
+			document.getElementById('attentionQTable').innerHTML = buildQTable(attMetrics, qScoresPerQ);
+
+			// --- Impulsivity chart ---
+			var impTraces = [
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.commission.qscore;}), mode:'lines+markers', name:'Commission', marker:{symbol:'triangle-up',size:8}},
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.errorRate.qscore;}), mode:'lines+markers', name:'Error rate', marker:{symbol:'triangle-down',size:8}}
+			];
+			Plotly.newPlot('impulsivityQChart', impTraces, chartLayout, {responsive:true});
+
+			// --- Impulsivity table ---
+			var impMetrics = [
+				{key:'commission', label:'Commission', valFn:function(q){return quarterStats[q].attention.commissionPct + '%';}},
+				{key:'errorRate', label:'Error rate', valFn:function(q){return quarterStats[q].attention.errorRate + '%';}}
+			];
+			document.getElementById('impulsivityQTable').innerHTML = buildQTable(impMetrics, qScoresPerQ);
+		}
+
+		function buildQTable(metrics, qScoresPerQ) {
+			var html = '<table class="q-breakdown-table">';
+			html += '<tr><th rowspan="2">Metric</th><th colspan="4">Result</th><th colspan="4">Q-score</th><th colspan="4">Percentile</th></tr>';
+			html += '<tr><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr>';
+			for (var m = 0; m < metrics.length; m++) {
+				var met = metrics[m];
+				html += '<tr><td>' + met.label + '</td>';
+				for (var q = 0; q < 4; q++) html += '<td>' + met.valFn(q) + '</td>';
+				for (var q = 0; q < 4; q++) html += '<td>' + qScoresPerQ[q][met.key].qscore + '</td>';
+				for (var q = 0; q < 4; q++) html += '<td>' + qScoresPerQ[q][met.key].percentile + '</td>';
+				html += '</tr>';
+			}
+			html += '</table>';
+			return html;
 		}
 
 		function padRight(str, len) {
@@ -842,6 +938,24 @@
 
 			document.getElementById('wrapper').style.display = 'block';
 			document.getElementById('finalGraph').style.display = 'none';
+
+			// Reconstruct per-quarter stats from raw data for breakdown
+			var quarterDurationMs = data.timeLimit / 4;
+			var quarterStats = [];
+			for (var q = 0; q < 4; q++) {
+				var qStart = q * quarterDurationMs, qEnd = (q + 1) * quarterDurationMs;
+				var qMvPts = data.movement.filter(function(p) { return p.rel >= qStart && p.rel < qEnd; });
+				var mvStats = computeMovementStats(qMvPts);
+				var qEvents = data.events.filter(function(e) { return e.rel >= qStart && e.rel < qEnd; });
+				var qTargets = qEvents.filter(function(e) { return e.isTarget; }).length;
+				var qNonTargets = qEvents.length - qTargets;
+				var qCorrectRT = data.correct.filter(function(c) { return c.rel >= qStart && c.rel < qEnd; }).map(function(c) { return c.rt; });
+				var qMissed = data.omissions.filter(function(o) { return o.rel >= qStart && o.rel < qEnd; }).length;
+				var qCommissions = data.commissions.filter(function(c) { return c.rel >= qStart && c.rel < qEnd; }).length;
+				var attStats = computeAttentionStats(qCorrectRT, qMissed, qTargets, qNonTargets, qCommissions);
+				quarterStats.push({quarter: q + 1, movement: mvStats, attention: attStats});
+			}
+			renderPerQuarterBreakdown(quarterStats);
 		}
 
 		// Distance plot from parsed data (reuses same algorithm)
@@ -1662,6 +1776,23 @@
 		.cmp-table td:first-child {
 			text-align: left;
 		}
+		.q-breakdown-table {
+			border-collapse: collapse;
+			font-size: 12px;
+			margin: 10px 0;
+		}
+		.q-breakdown-table th, .q-breakdown-table td {
+			border: 1px solid #ddd;
+			padding: 3px 6px;
+			text-align: center;
+		}
+		.q-breakdown-table th {
+			background: #f5f5f5;
+		}
+		.q-breakdown-table td:first-child {
+			text-align: left;
+			font-weight: bold;
+		}
 		.qscore-tick {
 			position: absolute;
 			top: 0;
@@ -1772,6 +1903,17 @@
 			<div class="center" style="margin-top:20px;">
 				<button id="exportButton" onclick="exportResults()">Export as Text</button>
 			</div>
+			<hr style="margin:30px 0">
+			<h2>Per-Quarter Breakdown</h2>
+			<h3>Activity Q1-Q4</h3>
+			<div id="activityQChart" style="width:300px;height:250px;display:inline-block;vertical-align:top;"></div>
+			<div id="activityQTable" style="display:inline-block;vertical-align:top;margin-left:20px;"></div>
+			<h3>Attention Q1-Q4</h3>
+			<div id="attentionQChart" style="width:300px;height:250px;display:inline-block;vertical-align:top;"></div>
+			<div id="attentionQTable" style="display:inline-block;vertical-align:top;margin-left:20px;"></div>
+			<h3>Impulsivity Q1-Q4</h3>
+			<div id="impulsivityQChart" style="width:300px;height:250px;display:inline-block;vertical-align:top;"></div>
+			<div id="impulsivityQTable" style="display:inline-block;vertical-align:top;margin-left:20px;"></div>
 			<p class="note">Note: Q-scores based on QbCheck Technical Manual Rev F (2022) norms, adults 20-60. Movement metrics (distance, area) use pixel units.</p>
 		</div>
 		<div id="comparisonResults" style="display:none; max-width:900px; margin:0 auto; padding:20px; font-family:'Open Sans',sans-serif;"></div>
