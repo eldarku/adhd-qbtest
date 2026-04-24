@@ -374,6 +374,8 @@
 				}
 				smoothed.push(sum / count);
 			}
+			var minDist = Math.min.apply(null, smoothed);
+			for (var i = 0; i < smoothed.length; i++) smoothed[i] -= minDist;
 			var maxDist = Math.max.apply(null, smoothed) || 1;
 
 			// Layout
@@ -864,6 +866,8 @@
 				for (var j = Math.max(0, i - windowSize); j <= Math.min(frameDist.length - 1, i + windowSize); j++) { sum += frameDist[j]; count++; }
 				smoothed.push(sum / count);
 			}
+			var minDist = Math.min.apply(null, smoothed);
+			for (var i = 0; i < smoothed.length; i++) smoothed[i] -= minDist;
 			var maxDist = Math.max.apply(null, smoothed) || 1;
 
 			var marginLeft = 50, marginRight = 20, marginTop = 10, marginBottom = 40;
