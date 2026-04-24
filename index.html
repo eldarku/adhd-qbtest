@@ -217,10 +217,10 @@
 			if (delta > timeLimit) {
 				console.log("Stop");
 				printStats();
+				started = false;
 				stopTracking();
 
 				window.setTimeout(function() {
-					started = false;
 					document.getElementById('canvas').style.display = 'none';
 					document.getElementById('webcamWrapper').style.display = 'none';
 					document.getElementById('movementWrapper').style.display = 'none';
