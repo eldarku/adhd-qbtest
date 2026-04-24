@@ -204,6 +204,7 @@
 				canvas = document.getElementById('canvas');
 				ctx = canvas.getContext('2d');
 
+				prevCoords = undefined; // reset so first movement frame doesn't spike
 				startTime = new Date();
 				main();
 			
