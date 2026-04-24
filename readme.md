@@ -72,6 +72,18 @@ Three composite scores summarize overall performance:
 - Activity and Attention/Impulse tables with per-metric Q-scores
 - Full results exportable as a `.txt` file
 
+## Export, Load & Compare
+
+**Export** — after a test, click "Export as Text" to save all results and raw data to a `.txt` file. The file includes composite Q-scores, per-metric tables, per-quarter summaries, and full raw data (stimulus events, responses, omissions, head movement coordinates).
+
+**Load Results** — click "Load Results" on the start screen and select a previously exported `.txt` file. The full results page is reconstructed from the file: Q-score bars, movement trajectory plots, distance-over-time plot, reaction time scatter, and all tables.
+
+**Compare Results** — click "Compare Results" and select two exported `.txt` files (Test 1 and Test 2). A side-by-side comparison view is shown with:
+- Dual Q-score bars (Test 1 and Test 2 markers on the same bar)
+- Side-by-side head movement trajectory canvases
+- Side-by-side reaction time scatter plots
+- Comparison tables with Result, Q-score, and Percentile columns for each test
+
 ## Tech Stack
 
 - Single HTML file — no build step, no backend
@@ -87,4 +99,9 @@ Three composite scores summarize overall performance:
 3. Click **Start**
 4. Respond (click or spacebar) when the same shape appears twice in a row
 5. Results appear automatically when the test ends
-6. Click **Export Results** to download raw data
+6. Click **Export as Text** to download results and raw data
+
+### Loading & Comparing Saved Results
+
+1. Click **Load Results** and select an exported `.txt` file to view past results
+2. Click **Compare Results** and select two `.txt` files to see a side-by-side comparison
