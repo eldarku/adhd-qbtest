@@ -22,6 +22,7 @@
 			distance: {logMean: 3.975, logSd: 0.152},       // log10(px), test1:21129→2.3, test2:10115→0.2
 			surfaceArea: {logMean: 2.573, logSd: 0.763},    // log10(px²), test1:15003→2.1, test2:446→0.1
 			microMovements: {logMean: 3.770, logSd: 0.261}, // log10(count), d>0.3 threshold, test1:28120→2.6, test2:8478→0.6
+			movSimplicity: {logMean: 1.288, logSd: 0.104},   // log10(%), 20-frame window ratio, test1:38.8%→2.9, test2:23.5%→0.8
 			// Attention (linear): reverse-engineered from official results
 			rtVariance: {mean: 128, sd: 42},       // RT Variation ms
 			omission: {mean: 0.9, sd: 7.3},        // Omission Error %
@@ -265,7 +266,7 @@
 		}
 
 		function computeMovementStats(points) {
-			if (points.length < 2) return {distance: 0, surfaceArea: 0, microMovements: 0, movementTime: '0.0'};
+			if (points.length < 2) return {distance: 0, surfaceArea: 0, microMovements: 0, movementTime: '0.0', movSimplicity: '0.0'};
 			var totalDist = 0, microMovements = 0, movingFrames = 0;
 			var xs = [], ys = [];
 			for (var i = 0; i < points.length; i++) { xs.push(points[i].x); ys.push(points[i].y); }
@@ -281,11 +282,32 @@
 			var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
 			var surfaceArea = Math.round((maxX - minX) * (maxY - minY));
 			var movementTime = ((movingFrames / (points.length - 1)) * 100).toFixed(1);
+			// Movement simplicity: straight-line ratio per 20-frame window
+			var winSize = 20, winStep = 10, simplicityRatios = [];
+			for (var i = 0; i + winSize < points.length; i += winStep) {
+				var pathDist = 0;
+				for (var j = i + 1; j < i + winSize; j++) {
+					var wdx = points[j].x - points[j-1].x;
+					var wdy = points[j].y - points[j-1].y;
+					pathDist += Math.sqrt(wdx*wdx + wdy*wdy);
+				}
+				if (pathDist > 0.1) {
+					var sdx = points[i+winSize-1].x - points[i].x;
+					var sdy = points[i+winSize-1].y - points[i].y;
+					simplicityRatios.push(Math.sqrt(sdx*sdx + sdy*sdy) / pathDist);
+				}
+			}
+			var movSimplicity = '0.0';
+			if (simplicityRatios.length > 0) {
+				var sum = 0; for (var i = 0; i < simplicityRatios.length; i++) sum += simplicityRatios[i];
+				movSimplicity = ((sum / simplicityRatios.length) * 100).toFixed(1);
+			}
 			return {
 				distance: Math.round(totalDist),
 				surfaceArea: surfaceArea,
 				microMovements: microMovements,
-				movementTime: movementTime
+				movementTime: movementTime,
+				movSimplicity: movSimplicity
 			};
 		}
 
@@ -505,14 +527,16 @@
 			}
 			drawCumulativeDistancePlot(quarterStats);
 			// Q2-Q4 aggregates
-			var q234mv = {distance: 0, surfaceArea: 0, microMovements: 0, movementTimeSum: 0};
+			var q234mv = {distance: 0, surfaceArea: 0, microMovements: 0, movementTimeSum: 0, simplicitySum: 0};
 			for (var q = 1; q < 4; q++) {
 				q234mv.distance += quarterStats[q].movement.distance;
 				q234mv.surfaceArea += quarterStats[q].movement.surfaceArea;
 				q234mv.microMovements += quarterStats[q].movement.microMovements;
 				q234mv.movementTimeSum += parseFloat(quarterStats[q].movement.movementTime);
+				q234mv.simplicitySum += parseFloat(quarterStats[q].movement.movSimplicity);
 			}
 			var avgMvTime = (q234mv.movementTimeSum / 3).toFixed(1);
+			var avgSimplicity = (q234mv.simplicitySum / 3).toFixed(1);
 			var allCorrectRT_Q234 = [], totalMissed_Q234 = 0, totalErrors_Q234 = 0, totalTargets_Q234 = 0, totalNonTargets_Q234 = 0;
 			for (var q = 1; q < 4; q++) {
 				var cq = filterByQuarter(delays.x, delays.y, q);
@@ -528,6 +552,7 @@
 			var qsDist = computeQScoreLog(q234mv.distance, NORMATIVE.distance);
 			var qsSurf = computeQScoreLog(q234mv.surfaceArea, NORMATIVE.surfaceArea);
 			var qsMicro = computeQScoreLog(q234mv.microMovements, NORMATIVE.microMovements);
+			var qsSimplicity = computeQScoreLog(parseFloat(avgSimplicity), NORMATIVE.movSimplicity);
 			var qsRTVar = computeQScore(overallAtt.reactionTimeVar, NORMATIVE.rtVariance);
 			var qsOmission = computeQScore(parseFloat(overallAtt.omissionPct), NORMATIVE.omission);
 			var qsRT = computeQScore(overallAtt.reactionTime, NORMATIVE.reactionTime);
@@ -535,7 +560,7 @@
 			var qsCommission = computeQScore(parseFloat(overallAtt.commissionPct), NORMATIVE.commission);
 			var qsErrorRate = computeQScore(parseFloat(overallAtt.errorRate), NORMATIVE.errorRate);
 			// Composite Q-scores
-			var qbActivity = parseFloat(((qsMvTime.qscore + qsDist.qscore + qsSurf.qscore + qsMicro.qscore) / 4).toFixed(1));
+			var qbActivity = parseFloat(((qsMvTime.qscore + qsDist.qscore + qsSurf.qscore + qsMicro.qscore + qsSimplicity.qscore) / 5).toFixed(1));
 			var qbActivityPct = Math.round(normalCDF(qbActivity) * 100);
 			var qbInattention = parseFloat(((qsRTVar.qscore + qsOmission.qscore + qsRT.qscore + qsNormVar.qscore) / 4).toFixed(1));
 			var qbInattentionPct = Math.round(normalCDF(qbInattention) * 100);
@@ -560,7 +585,8 @@
 				qRow('Movement time', avgMvTime + '%', qsMvTime) +
 				qRow('Distance', q234mv.distance + ' px', qsDist) +
 				qRow('Surface area', q234mv.surfaceArea + ' px\u00B2', qsSurf) +
-				qRow('Micro-movements', q234mv.microMovements, qsMicro);
+				qRow('Micro-movements', q234mv.microMovements, qsMicro) +
+				qRow('Mov. simplicity', avgSimplicity + '%', qsSimplicity);
 			// Attention & Impulse table with Q-scores
 			document.getElementById('attentionTable').innerHTML =
 				'<tr><th>Metric</th><th>Result</th><th style="width:140px">-3 &nbsp;&nbsp; 0 &nbsp;&nbsp; +3</th><th>Q-score</th><th>Pctl</th></tr>' +
@@ -634,6 +660,7 @@
 					distance: computeQScoreLog(mv.distance, NORMATIVE.distance),
 					surfaceArea: computeQScoreLog(mv.surfaceArea, NORMATIVE.surfaceArea),
 					microMovements: computeQScoreLog(mv.microMovements, NORMATIVE.microMovements),
+					movSimplicity: computeQScoreLog(parseFloat(mv.movSimplicity), NORMATIVE.movSimplicity),
 					// Attention (linear)
 					rtVariance: computeQScore(att.reactionTimeVar, NORMATIVE.rtVariance),
 					omission: computeQScore(parseFloat(att.omissionPct), NORMATIVE.omission),
@@ -653,7 +680,8 @@
 				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.microMovements.qscore;}), mode:'lines+markers', name:'Micro-mov.', marker:{symbol:'triangle-up',size:8}},
 				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.distance.qscore;}), mode:'lines+markers', name:'Distance', marker:{symbol:'triangle-down',size:8}},
 				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.surfaceArea.qscore;}), mode:'lines+markers', name:'Surface', marker:{symbol:'square',size:8}},
-				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.movementTime.qscore;}), mode:'lines+markers', name:'Mov. time', marker:{symbol:'circle',size:8}}
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.movementTime.qscore;}), mode:'lines+markers', name:'Mov. time', marker:{symbol:'circle',size:8}},
+				{x:[0,1,2,3], y:qScoresPerQ.map(function(q){return q.movSimplicity.qscore;}), mode:'lines+markers', name:'Simplicity', marker:{symbol:'diamond',size:8}}
 			];
 			Plotly.newPlot('activityQChart', actTraces, chartLayout, {responsive:true});
 
@@ -662,7 +690,8 @@
 				{key:'microMovements', label:'Micro-mov.', valFn:function(q){return quarterStats[q].movement.microMovements;}},
 				{key:'distance', label:'Distance', valFn:function(q){return quarterStats[q].movement.distance + ' px';}},
 				{key:'surfaceArea', label:'Surface area', valFn:function(q){return quarterStats[q].movement.surfaceArea + ' px\u00B2';}},
-				{key:'movementTime', label:'Mov. time', valFn:function(q){return quarterStats[q].movement.movementTime + '%';}}
+				{key:'movementTime', label:'Mov. time', valFn:function(q){return quarterStats[q].movement.movementTime + '%';}},
+				{key:'movSimplicity', label:'Simplicity', valFn:function(q){return quarterStats[q].movement.movSimplicity + '%';}}
 			];
 			document.getElementById('activityQTable').innerHTML = buildQTable(actMetrics, qScoresPerQ);
 
@@ -904,29 +933,98 @@
 			// Cumulative distance plot
 			drawCumulativeDistancePlotFromData(data.movement, data.timeLimit, data.quarters);
 
-			// Activity table
-			function qRow(label, value, qscore, pctl) {
-				return '<tr><td>' + label + '</td><td>' + value + '</td><td>' + renderQScoreBar(qscore) + '</td><td>' + qscore + '</td><td>' + pctl + '</td></tr>';
+			// Reconstruct per-quarter stats from raw data
+			var quarterDurationMs = data.timeLimit / 4;
+			var quarterStats = [];
+			for (var q = 0; q < 4; q++) {
+				var qStart = q * quarterDurationMs, qEnd = (q + 1) * quarterDurationMs;
+				var qMvPts = data.movement.filter(function(p) { return p.rel >= qStart && p.rel < qEnd; });
+				var mvStats = computeMovementStats(qMvPts);
+				var qEvents = data.events.filter(function(e) { return e.rel >= qStart && e.rel < qEnd; });
+				var qTargets = qEvents.filter(function(e) { return e.isTarget; }).length;
+				var qNonTargets = qEvents.length - qTargets;
+				var qCorrectRT = data.correct.filter(function(c) { return c.rel >= qStart && c.rel < qEnd; }).map(function(c) { return c.rt; });
+				var qMissed = data.omissions.filter(function(o) { return o.rel >= qStart && o.rel < qEnd; }).length;
+				var qCommissions = data.commissions.filter(function(c) { return c.rel >= qStart && c.rel < qEnd; }).length;
+				var attStats = computeAttentionStats(qCorrectRT, qMissed, qTargets, qNonTargets, qCommissions);
+				quarterStats.push({quarter: q + 1, movement: mvStats, attention: attStats});
 			}
-			var a = data.activity;
+
+			// Aggregate Q2-Q4 movement stats (recomputed from raw data)
+			var q234mv = {distance: 0, surfaceArea: 0, microMovements: 0, movementTimeSum: 0, simplicitySum: 0};
+			for (var q = 1; q < 4; q++) {
+				q234mv.distance += quarterStats[q].movement.distance;
+				q234mv.surfaceArea += quarterStats[q].movement.surfaceArea;
+				q234mv.microMovements += quarterStats[q].movement.microMovements;
+				q234mv.movementTimeSum += parseFloat(quarterStats[q].movement.movementTime);
+				q234mv.simplicitySum += parseFloat(quarterStats[q].movement.movSimplicity);
+			}
+			var avgMvTime = (q234mv.movementTimeSum / 3).toFixed(1);
+			var avgSimplicity = (q234mv.simplicitySum / 3).toFixed(1);
+
+			// Aggregate Q2-Q4 attention stats
+			var allCorrectRT_Q234 = [], totalMissed_Q234 = 0, totalErrors_Q234 = 0, totalTargets_Q234 = 0, totalNonTargets_Q234 = 0;
+			for (var q = 1; q < 4; q++) {
+				var qStart2 = q * quarterDurationMs, qEnd2 = (q + 1) * quarterDurationMs;
+				var crt = data.correct.filter(function(c) { return c.rel >= qStart2 && c.rel < qEnd2; }).map(function(c) { return c.rt; });
+				allCorrectRT_Q234 = allCorrectRT_Q234.concat(crt);
+				totalMissed_Q234 += data.omissions.filter(function(o) { return o.rel >= qStart2 && o.rel < qEnd2; }).length;
+				totalErrors_Q234 += data.commissions.filter(function(c) { return c.rel >= qStart2 && c.rel < qEnd2; }).length;
+				var qEvt = data.events.filter(function(e) { return e.rel >= qStart2 && e.rel < qEnd2; });
+				totalTargets_Q234 += qEvt.filter(function(e) { return e.isTarget; }).length;
+				totalNonTargets_Q234 += qEvt.length - qEvt.filter(function(e) { return e.isTarget; }).length;
+			}
+			var overallAtt = computeAttentionStats(allCorrectRT_Q234, totalMissed_Q234, totalTargets_Q234, totalNonTargets_Q234, totalErrors_Q234);
+
+			// Compute Q-scores from recomputed values
+			var qsMvTime = computeQScoreLog(parseFloat(avgMvTime), NORMATIVE.movementTime);
+			var qsDist = computeQScoreLog(q234mv.distance, NORMATIVE.distance);
+			var qsSurf = computeQScoreLog(q234mv.surfaceArea, NORMATIVE.surfaceArea);
+			var qsMicro = computeQScoreLog(q234mv.microMovements, NORMATIVE.microMovements);
+			var qsSimplicity = computeQScoreLog(parseFloat(avgSimplicity), NORMATIVE.movSimplicity);
+			var qsRTVar = computeQScore(overallAtt.reactionTimeVar, NORMATIVE.rtVariance);
+			var qsOmission = computeQScore(parseFloat(overallAtt.omissionPct), NORMATIVE.omission);
+			var qsRT = computeQScore(overallAtt.reactionTime, NORMATIVE.reactionTime);
+			var qsNormVar = computeQScore(parseFloat(overallAtt.normVar), NORMATIVE.normVariance);
+			var qsCommission = computeQScore(parseFloat(overallAtt.commissionPct), NORMATIVE.commission);
+			var qsErrorRate = computeQScore(parseFloat(overallAtt.errorRate), NORMATIVE.errorRate);
+
+			// Composite Q-scores
+			var qbActivity = parseFloat(((qsMvTime.qscore + qsDist.qscore + qsSurf.qscore + qsMicro.qscore + qsSimplicity.qscore) / 5).toFixed(1));
+			var qbActivityPct = Math.round(normalCDF(qbActivity) * 100);
+			var qbInattention = parseFloat(((qsRTVar.qscore + qsOmission.qscore + qsRT.qscore + qsNormVar.qscore) / 4).toFixed(1));
+			var qbInattentionPct = Math.round(normalCDF(qbInattention) * 100);
+			var qbImpulsivity = parseFloat(((qsCommission.qscore + qsErrorRate.qscore) / 2).toFixed(1));
+			var qbImpulsivityPct = Math.round(normalCDF(qbImpulsivity) * 100);
+
+			// Update composite display
+			document.getElementById('qbActivityScore').innerHTML = compositeBar('QbActivity', qbActivity, qbActivityPct);
+			document.getElementById('qbInattentionScore').innerHTML = compositeBar('QbInattention', qbInattention, qbInattentionPct);
+			document.getElementById('qbImpulsivityScore').innerHTML = compositeBar('QbImpulsivity', qbImpulsivity, qbImpulsivityPct);
+
+			// Activity table (recomputed)
+			function qRow2(label, value, qs) {
+				return '<tr><td>' + label + '</td><td>' + value + '</td><td>' + renderQScoreBar(qs.qscore) + '</td><td>' + qs.qscore + '</td><td>' + qs.percentile + '</td></tr>';
+			}
 			document.getElementById('activityTable').innerHTML =
 				'<tr><th>Metric</th><th>Result</th><th style="width:140px">-3 &nbsp;&nbsp; 0 &nbsp;&nbsp; +3</th><th>Q-score</th><th>Pctl</th></tr>' +
-				qRow('Movement time', a.movementTime.value, a.movementTime.qscore, a.movementTime.percentile) +
-				qRow('Distance', a.distance.value, a.distance.qscore, a.distance.percentile) +
-				qRow('Surface area', a.surfaceArea.value, a.surfaceArea.qscore, a.surfaceArea.percentile) +
-				qRow('Micro-movements', a.microMovements.value, a.microMovements.qscore, a.microMovements.percentile);
+				qRow2('Movement time', avgMvTime + '%', qsMvTime) +
+				qRow2('Distance', q234mv.distance + ' px', qsDist) +
+				qRow2('Surface area', q234mv.surfaceArea + ' px\u00B2', qsSurf) +
+				qRow2('Micro-movements', q234mv.microMovements, qsMicro) +
+				qRow2('Mov. simplicity', avgSimplicity + '%', qsSimplicity);
 
-			var att = data.attention, imp = data.impulse;
+			// Attention & Impulse table (recomputed)
 			document.getElementById('attentionTable').innerHTML =
 				'<tr><th>Metric</th><th>Result</th><th style="width:140px">-3 &nbsp;&nbsp; 0 &nbsp;&nbsp; +3</th><th>Q-score</th><th>Pctl</th></tr>' +
 				'<tr><td colspan="5" style="background:#e8f5e9;font-weight:bold;font-size:12px">Attention</td></tr>' +
-				qRow('RT variance', att.rtVariance.value, att.rtVariance.qscore, att.rtVariance.percentile) +
-				qRow('Omission', att.omission.value, att.omission.qscore, att.omission.percentile) +
-				qRow('Reaction time', att.reactionTime.value, att.reactionTime.qscore, att.reactionTime.percentile) +
-				qRow('Norm. variance', att.normVariance.value, att.normVariance.qscore, att.normVariance.percentile) +
+				qRow2('RT variance', overallAtt.reactionTimeVar + ' ms', qsRTVar) +
+				qRow2('Omission', overallAtt.omissionPct + '%', qsOmission) +
+				qRow2('Reaction time', overallAtt.reactionTime + ' ms', qsRT) +
+				qRow2('Norm. variance', overallAtt.normVar + '%', qsNormVar) +
 				'<tr><td colspan="5" style="background:#fff3e0;font-weight:bold;font-size:12px">Impulse</td></tr>' +
-				qRow('Commission error', imp.commission.value, imp.commission.qscore, imp.commission.percentile) +
-				qRow('Error rate', imp.errorRate.value, imp.errorRate.qscore, imp.errorRate.percentile);
+				qRow2('Commission error', overallAtt.commissionPct + '%', qsCommission) +
+				qRow2('Error rate', overallAtt.errorRate + '%', qsErrorRate);
 
 			// Scatter plot
 			var totalMinutes = data.timeLimit / 60000;
@@ -951,22 +1049,6 @@
 			document.getElementById('wrapper').style.display = 'block';
 			document.getElementById('finalGraph').style.display = 'none';
 
-			// Reconstruct per-quarter stats from raw data for breakdown
-			var quarterDurationMs = data.timeLimit / 4;
-			var quarterStats = [];
-			for (var q = 0; q < 4; q++) {
-				var qStart = q * quarterDurationMs, qEnd = (q + 1) * quarterDurationMs;
-				var qMvPts = data.movement.filter(function(p) { return p.rel >= qStart && p.rel < qEnd; });
-				var mvStats = computeMovementStats(qMvPts);
-				var qEvents = data.events.filter(function(e) { return e.rel >= qStart && e.rel < qEnd; });
-				var qTargets = qEvents.filter(function(e) { return e.isTarget; }).length;
-				var qNonTargets = qEvents.length - qTargets;
-				var qCorrectRT = data.correct.filter(function(c) { return c.rel >= qStart && c.rel < qEnd; }).map(function(c) { return c.rt; });
-				var qMissed = data.omissions.filter(function(o) { return o.rel >= qStart && o.rel < qEnd; }).length;
-				var qCommissions = data.commissions.filter(function(c) { return c.rel >= qStart && c.rel < qEnd; }).length;
-				var attStats = computeAttentionStats(qCorrectRT, qMissed, qTargets, qNonTargets, qCommissions);
-				quarterStats.push({quarter: q + 1, movement: mvStats, attention: attStats});
-			}
 			renderPerQuarterBreakdown(quarterStats);
 		}
 
