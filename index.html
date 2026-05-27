@@ -463,7 +463,7 @@
 				}
 				var labelX = marginLeft + (plotW * (q + 0.5)) / 4;
 				ctx2.fillText('Q' + (q + 1), labelX, marginTop + plotH + 15);
-				ctx2.fillText('A = ' + quarterStats[q].movement.distance + ' px', labelX, marginTop + plotH + 30);
+				ctx2.fillText('Dist = ' + quarterStats[q].movement.distance + ' px', labelX, marginTop + plotH + 30);
 			}
 
 			// Draw instantaneous distance line (smoothed)
@@ -522,8 +522,8 @@
 			}
 			for (var q = 0; q < 4; q++) {
 				drawQuarterMovement('movementQ' + (q+1), quarterStats[q].movementPoints, globalBounds);
-				document.getElementById('surfaceQ' + (q+1)).textContent = 'O = ' + quarterStats[q].movement.surfaceArea + ' px\u00B2';
-				document.getElementById('distanceQ' + (q+1)).textContent = 'A = ' + quarterStats[q].movement.distance + ' px';
+				document.getElementById('surfaceQ' + (q+1)).textContent = 'Area = ' + quarterStats[q].movement.surfaceArea + ' px\u00B2';
+				document.getElementById('distanceQ' + (q+1)).textContent = 'Dist = ' + quarterStats[q].movement.distance + ' px';
 			}
 			drawCumulativeDistancePlot(quarterStats);
 			// Q2-Q4 aggregates
@@ -1029,8 +1029,8 @@
 			}
 			for (var q = 0; q < 4; q++) {
 				drawQuarterMovement('movementQ'+(q+1), qMvPoints[q], globalBounds);
-				document.getElementById('surfaceQ'+(q+1)).textContent = 'O = ' + (data.quarters[q].surfaceArea || 0) + ' px\u00B2';
-				document.getElementById('distanceQ'+(q+1)).textContent = 'A = ' + (data.quarters[q].distance || 0) + ' px';
+				document.getElementById('surfaceQ'+(q+1)).textContent = 'Area = ' + (data.quarters[q].surfaceArea || 0) + ' px\u00B2';
+				document.getElementById('distanceQ'+(q+1)).textContent = 'Dist = ' + (data.quarters[q].distance || 0) + ' px';
 			}
 
 			// Cumulative distance plot
@@ -1139,7 +1139,7 @@
 				if (q < 3) { ctx2.beginPath(); ctx2.moveTo(qX, marginTop); ctx2.lineTo(qX, marginTop + plotH); ctx2.stroke(); }
 				var labelX = marginLeft + (plotW * (q + 0.5)) / 4;
 				ctx2.fillText('Q' + (q + 1), labelX, marginTop + plotH + 15);
-				ctx2.fillText('A = ' + (quarters[q].distance || quarters[q].movement && quarters[q].movement.distance || 0) + ' px', labelX, marginTop + plotH + 30);
+				ctx2.fillText('Dist = ' + (quarters[q].distance || quarters[q].movement && quarters[q].movement.distance || 0) + ' px', labelX, marginTop + plotH + 30);
 			}
 
 			ctx2.beginPath(); ctx2.strokeStyle = '#000'; ctx2.lineWidth = 1;
@@ -2055,29 +2055,29 @@
 				<div class="quarter-panel">
 					<canvas id="movementQ1" width="150" height="150"></canvas>
 					<div class="quarter-label">Q1</div>
-					<div id="surfaceQ1" class="stat-label">O = 0 px²</div>
+					<div id="surfaceQ1" class="stat-label">Area = 0 px²</div>
 				</div>
 				<div class="quarter-panel">
 					<canvas id="movementQ2" width="150" height="150"></canvas>
 					<div class="quarter-label">Q2</div>
-					<div id="surfaceQ2" class="stat-label">O = 0 px²</div>
+					<div id="surfaceQ2" class="stat-label">Area = 0 px²</div>
 				</div>
 				<div class="quarter-panel">
 					<canvas id="movementQ3" width="150" height="150"></canvas>
 					<div class="quarter-label">Q3</div>
-					<div id="surfaceQ3" class="stat-label">O = 0 px²</div>
+					<div id="surfaceQ3" class="stat-label">Area = 0 px²</div>
 				</div>
 				<div class="quarter-panel">
 					<canvas id="movementQ4" width="150" height="150"></canvas>
 					<div class="quarter-label">Q4</div>
-					<div id="surfaceQ4" class="stat-label">O = 0 px²</div>
+					<div id="surfaceQ4" class="stat-label">Area = 0 px²</div>
 				</div>
 			</div>
 			<div class="quarter-row">
-				<div class="quarter-panel"><div id="distanceQ1" class="stat-label">A = 0 px</div></div>
-				<div class="quarter-panel"><div id="distanceQ2" class="stat-label">A = 0 px</div></div>
-				<div class="quarter-panel"><div id="distanceQ3" class="stat-label">A = 0 px</div></div>
-				<div class="quarter-panel"><div id="distanceQ4" class="stat-label">A = 0 px</div></div>
+				<div class="quarter-panel"><div id="distanceQ1" class="stat-label">Dist = 0 px</div></div>
+				<div class="quarter-panel"><div id="distanceQ2" class="stat-label">Dist = 0 px</div></div>
+				<div class="quarter-panel"><div id="distanceQ3" class="stat-label">Dist = 0 px</div></div>
+				<div class="quarter-panel"><div id="distanceQ4" class="stat-label">Dist = 0 px</div></div>
 			</div>
 			<div style="margin: 20px auto; max-width: 700px;">
 				<canvas id="cumulativeDistancePlot" width="700" height="150"></canvas>
