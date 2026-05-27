@@ -2088,7 +2088,7 @@
 		.table-panel th {
 			background: #f5f5f5;
 		}
-		#exportButton {
+		#exportButton, #exportBtn {
 			background: linear-gradient(to bottom, #2e7d32 5%, #1b5e20 100%);
 			background-color: #2e7d32;
 			border-radius: 3px;
@@ -2100,7 +2100,7 @@
 			padding: 6px 24px;
 			text-decoration: none;
 		}
-		#exportButton:hover {
+		#exportButton:hover, #exportBtn:hover {
 			background: linear-gradient(to bottom, #1b5e20 5%, #2e7d32 100%);
 		}
 		.qscore-bar {
@@ -2243,6 +2243,9 @@
 		<p id="webcamWrapper"><center><canvas id="webcam" width=640 height=480></canvas></center></p>
 		<p id="movementWrapper"><center><canvas id="movement" width=640 height=480></canvas></center></p>
 		<div id="results" style="display:none;">
+			<div class="center" style="margin-bottom:20px;">
+				<button id="exportBtn" onclick="exportResults()">Export Results</button>
+			</div>
 			<h2>Activity</h2>
 			<div id="qbActivityScore"></div>
 			<div class="quarter-row">
@@ -2290,9 +2293,7 @@
 					<table id="attentionTable"></table>
 				</div>
 			</div>
-			<div class="center" style="margin-top:20px;">
-				<button id="exportBtn" onclick="exportResults()">Export Results</button>
-			</div>
+
 			<hr style="margin:30px 0">
 			<h2>Per-Quarter Breakdown</h2>
 			<h3>Activity Q1-Q4</h3>
