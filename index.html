@@ -17,11 +17,11 @@
 		// Movement metrics use LOG10 transform (log-normal distribution)
 		// Attention/Impulse metrics use linear transform
 		const NORMATIVE = {
-			// Movement (log10 space): derived from official test1 (ADHD) and test2 (medicated) results
-			movementTime: {logMean: 0.433, logSd: 0.445},   // log10(%), test1:35%→2.5, test2:3%→0.1
-			distance: {logMean: 3.475, logSd: 0.219},       // log10(px), test1:9500→2.3, test2:3300→0.2
-			surfaceArea: {logMean: 2.811, logSd: 0.343},    // log10(px²), test1:3400→2.1, test2:700→0.1
-			microMovements: {logMean: 3.85, logSd: 0.271},  // log10(count), calibrated for 60fps webcam
+			// Movement (log10 space): calibrated from paired webcam vs official QbTest sessions
+			movementTime: {logMean: 1.584, logSd: 0.111},   // log10(%), test1:72.6%→2.5, test2:39.3%→0.1
+			distance: {logMean: 3.975, logSd: 0.152},       // log10(px), test1:21129→2.3, test2:10115→0.2
+			surfaceArea: {logMean: 2.573, logSd: 0.763},    // log10(px²), test1:15003→2.1, test2:446→0.1
+			microMovements: {logMean: 3.770, logSd: 0.261}, // log10(count), d>0.3 threshold, test1:28120→2.6, test2:8478→0.6
 			// Attention (linear): reverse-engineered from official results
 			rtVariance: {mean: 128, sd: 42},       // RT Variation ms
 			omission: {mean: 0.9, sd: 7.3},        // Omission Error %
@@ -274,8 +274,8 @@
 				var dy = points[i].y - points[i-1].y;
 				var d = Math.sqrt(dx*dx + dy*dy);
 				totalDist += d;
-				if (d > 0.05 && d < 0.2) microMovements++; // small movements (pico smoothed scale)
-				if (d > 0.2) movingFrames++; // noticeable movement
+				if (d > 0.3) microMovements++; // micro-movements: d>0.3 matches official QbTest ratio
+				if (d > 0.2) movingFrames++; // movement time: any noticeable displacement
 			}
 			var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
 			var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
