@@ -408,9 +408,11 @@
 				}
 				smoothed.push(sum / count);
 			}
-			var minDist = Math.min.apply(null, smoothed);
+			var minDist = Infinity, maxDist = -Infinity;
+			for (var i = 0; i < smoothed.length; i++) { if (smoothed[i] < minDist) minDist = smoothed[i]; }
 			for (var i = 0; i < smoothed.length; i++) smoothed[i] -= minDist;
-			var maxDist = Math.max.apply(null, smoothed) || 1;
+			for (var i = 0; i < smoothed.length; i++) { if (smoothed[i] > maxDist) maxDist = smoothed[i]; }
+			maxDist = maxDist || 1;
 
 			// Layout
 			var marginLeft = 50, marginRight = 20, marginTop = 10, marginBottom = 40;
@@ -513,12 +515,14 @@
 			for (var q = 0; q < 4; q++) allMvPoints = allMvPoints.concat(quarterStats[q].movementPoints);
 			var globalBounds = null;
 			if (allMvPoints.length >= 2) {
-				var allXs = allMvPoints.map(function(p){return p.x;});
-				var allYs = allMvPoints.map(function(p){return p.y;});
-				globalBounds = {
-					minX: Math.min.apply(null, allXs), maxX: Math.max.apply(null, allXs),
-					minY: Math.min.apply(null, allYs), maxY: Math.max.apply(null, allYs)
-				};
+				var gb = {minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity};
+				for (var i = 0; i < allMvPoints.length; i++) {
+					if (allMvPoints[i].x < gb.minX) gb.minX = allMvPoints[i].x;
+					if (allMvPoints[i].x > gb.maxX) gb.maxX = allMvPoints[i].x;
+					if (allMvPoints[i].y < gb.minY) gb.minY = allMvPoints[i].y;
+					if (allMvPoints[i].y > gb.maxY) gb.maxY = allMvPoints[i].y;
+				}
+				globalBounds = gb;
 			}
 			for (var q = 0; q < 4; q++) {
 				drawQuarterMovement('movementQ' + (q+1), quarterStats[q].movementPoints, globalBounds);
@@ -538,8 +542,14 @@
 			var q234MvPoints = [];
 			for (var q = 1; q < 4; q++) q234MvPoints = q234MvPoints.concat(quarterStats[q].movementPoints);
 			if (q234MvPoints.length > 0) {
-				var saXs = q234MvPoints.map(function(p){return p.x;}), saYs = q234MvPoints.map(function(p){return p.y;});
-				q234mv.surfaceArea = Math.round((Math.max.apply(null,saXs)-Math.min.apply(null,saXs)) * (Math.max.apply(null,saYs)-Math.min.apply(null,saYs)));
+				var sMinX = Infinity, sMaxX = -Infinity, sMinY = Infinity, sMaxY = -Infinity;
+				for (var i = 0; i < q234MvPoints.length; i++) {
+					if (q234MvPoints[i].x < sMinX) sMinX = q234MvPoints[i].x;
+					if (q234MvPoints[i].x > sMaxX) sMaxX = q234MvPoints[i].x;
+					if (q234MvPoints[i].y < sMinY) sMinY = q234MvPoints[i].y;
+					if (q234MvPoints[i].y > sMaxY) sMaxY = q234MvPoints[i].y;
+				}
+				q234mv.surfaceArea = Math.round((sMaxX - sMinX) * (sMaxY - sMinY));
 			}
 			var avgMvTime = (q234mv.movementTimeSum / 3).toFixed(1);
 			var avgSimplicity = (q234mv.simplicitySum / 3).toFixed(1);
@@ -783,8 +793,14 @@
 			// Surface area: single bounding box over all Q2-Q4 points
 			var q234MvPts = data.movement.filter(function(p) { return p.rel >= quarterDurationMs; });
 			if (q234MvPts.length > 0) {
-				var saXs = q234MvPts.map(function(p){return p.x;}), saYs = q234MvPts.map(function(p){return p.y;});
-				q234mv.surfaceArea = Math.round((Math.max.apply(null,saXs)-Math.min.apply(null,saXs)) * (Math.max.apply(null,saYs)-Math.min.apply(null,saYs)));
+				var sMinX = Infinity, sMaxX = -Infinity, sMinY = Infinity, sMaxY = -Infinity;
+				for (var i = 0; i < q234MvPts.length; i++) {
+					if (q234MvPts[i].x < sMinX) sMinX = q234MvPts[i].x;
+					if (q234MvPts[i].x > sMaxX) sMaxX = q234MvPts[i].x;
+					if (q234MvPts[i].y < sMinY) sMinY = q234MvPts[i].y;
+					if (q234MvPts[i].y > sMaxY) sMaxY = q234MvPts[i].y;
+				}
+				q234mv.surfaceArea = Math.round((sMaxX - sMinX) * (sMaxY - sMinY));
 			}
 			var avgMvTime = (q234mv.movementTimeSum / 3).toFixed(1);
 			var avgSimplicity = (q234mv.simplicitySum / 3).toFixed(1);
@@ -1024,8 +1040,14 @@
 			var allMv = data.movement;
 			var globalBounds = null;
 			if (allMv.length >= 2) {
-				var xs = allMv.map(function(p){return p.x;}), ys = allMv.map(function(p){return p.y;});
-				globalBounds = {minX: Math.min.apply(null,xs), maxX: Math.max.apply(null,xs), minY: Math.min.apply(null,ys), maxY: Math.max.apply(null,ys)};
+				var gb = {minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity};
+				for (var i = 0; i < allMv.length; i++) {
+					if (allMv[i].x < gb.minX) gb.minX = allMv[i].x;
+					if (allMv[i].x > gb.maxX) gb.maxX = allMv[i].x;
+					if (allMv[i].y < gb.minY) gb.minY = allMv[i].y;
+					if (allMv[i].y > gb.maxY) gb.maxY = allMv[i].y;
+				}
+				globalBounds = gb;
 			}
 			for (var q = 0; q < 4; q++) {
 				drawQuarterMovement('movementQ'+(q+1), qMvPoints[q], globalBounds);
@@ -1116,9 +1138,11 @@
 				for (var j = Math.max(0, i - windowSize); j <= Math.min(frameDist.length - 1, i + windowSize); j++) { sum += frameDist[j]; count++; }
 				smoothed.push(sum / count);
 			}
-			var minDist = Math.min.apply(null, smoothed);
+			var minDist = Infinity, maxDist = -Infinity;
+			for (var i = 0; i < smoothed.length; i++) { if (smoothed[i] < minDist) minDist = smoothed[i]; }
 			for (var i = 0; i < smoothed.length; i++) smoothed[i] -= minDist;
-			var maxDist = Math.max.apply(null, smoothed) || 1;
+			for (var i = 0; i < smoothed.length; i++) { if (smoothed[i] > maxDist) maxDist = smoothed[i]; }
+			maxDist = maxDist || 1;
 
 			var marginLeft = 50, marginRight = 20, marginTop = 10, marginBottom = 40;
 			var plotW = w - marginLeft - marginRight, plotH = h - marginTop - marginBottom;
@@ -1287,12 +1311,15 @@
 			// Draw movement trajectories on canvases (shared scale)
 			setTimeout(function() {
 				// Compute global bounds across both tests for consistent scale
-				var allMv = d1.movement.concat(d2.movement);
-				var allXs = allMv.map(function(p){return p.x;}), allYs = allMv.map(function(p){return p.y;});
-				var globalBounds = {
-					minX: Math.min.apply(null,allXs), maxX: Math.max.apply(null,allXs),
-					minY: Math.min.apply(null,allYs), maxY: Math.max.apply(null,allYs)
-				};
+				var globalBounds = {minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity};
+				[d1.movement, d2.movement].forEach(function(mv) {
+					for (var i = 0; i < mv.length; i++) {
+						if (mv[i].x < globalBounds.minX) globalBounds.minX = mv[i].x;
+						if (mv[i].x > globalBounds.maxX) globalBounds.maxX = mv[i].x;
+						if (mv[i].y < globalBounds.minY) globalBounds.minY = mv[i].y;
+						if (mv[i].y > globalBounds.maxY) globalBounds.maxY = mv[i].y;
+					}
+				});
 				drawMovementOnCanvas('cmpMvAll1', d1.movement, globalBounds);
 				drawMovementOnCanvas('cmpMvAll2', d2.movement, globalBounds);
 				renderCmpScatter('cmpScatter1', d1);
@@ -1323,9 +1350,13 @@
 				minX = sharedBounds.minX; maxX = sharedBounds.maxX;
 				minY = sharedBounds.minY; maxY = sharedBounds.maxY;
 			} else {
-				var xs = movPoints.map(function(p){return p.x;}), ys = movPoints.map(function(p){return p.y;});
-				minX = Math.min.apply(null,xs); maxX = Math.max.apply(null,xs);
-				minY = Math.min.apply(null,ys); maxY = Math.max.apply(null,ys);
+				minX = Infinity; maxX = -Infinity; minY = Infinity; maxY = -Infinity;
+				for (var i = 0; i < movPoints.length; i++) {
+					if (movPoints[i].x < minX) minX = movPoints[i].x;
+					if (movPoints[i].x > maxX) maxX = movPoints[i].x;
+					if (movPoints[i].y < minY) minY = movPoints[i].y;
+					if (movPoints[i].y > maxY) maxY = movPoints[i].y;
+				}
 			}
 			var rangeX = maxX - minX || 1, rangeY = maxY - minY || 1;
 			var margin = 10;
