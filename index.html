@@ -1421,6 +1421,128 @@
 			}
 		}
 
+		var _checkStream = null, _checkRAF = null, _checkCascade = null;
+		function toggleCameraCheck() {
+			var container = document.getElementById('cameraCheckContainer');
+			if (container.style.display === 'none') {
+				container.style.display = 'block';
+				startCameraCheck();
+			} else {
+				stopCameraCheck();
+				container.style.display = 'none';
+			}
+		}
+
+		function startCameraCheck() {
+			var video = document.getElementById('checkVideo');
+			var canvas = document.getElementById('checkCanvas');
+			var ctx = canvas.getContext('2d');
+			var status = document.getElementById('checkStatus');
+			var trail = [];
+			var maxTrail = 600;
+
+			function beginDetection() {
+				var detectCanvas = document.createElement('canvas');
+				detectCanvas.width = 640; detectCanvas.height = 480;
+				var dctx = detectCanvas.getContext('2d');
+				var update_memory = pico.instantiate_detection_memory(5);
+
+				function detectLoop() {
+					dctx.drawImage(video, 0, 0, 640, 480);
+					var rgba = dctx.getImageData(0, 0, 640, 480).data;
+					var gray = new Uint8Array(640 * 480);
+					for (var i = 0; i < gray.length; i++) gray[i] = (rgba[i*4]*2 + rgba[i*4+1]*5 + rgba[i*4+2]) >> 3;
+
+					var image = {pixels: gray, nrows: 480, ncols: 640, ldim: 640};
+					var params = {shiftfactor: 0.1, minsize: 100, maxsize: 1000, scalefactor: 1.1};
+					var dets = pico.run_cascade(image, _checkCascade, params);
+					dets = update_memory(dets);
+					dets = pico.cluster_detections(dets, 0.2);
+
+					var found = false;
+					for (var i = 0; i < dets.length; i++) {
+						if (dets[i][3] > 50) {
+							trail.push({x: dets[i][1], y: dets[i][0]});
+							if (trail.length > maxTrail) trail.shift();
+							found = true;
+							break;
+						}
+					}
+
+					// Draw trail
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+					ctx.beginPath();
+					ctx.moveTo(0, canvas.height/2); ctx.lineTo(canvas.width, canvas.height/2);
+					ctx.moveTo(canvas.width/2, 0); ctx.lineTo(canvas.width/2, canvas.height);
+					ctx.strokeStyle = '#eee'; ctx.lineWidth = 1; ctx.stroke();
+
+					if (trail.length > 1) {
+						var sumX = 0, sumY = 0;
+						for (var i = 0; i < trail.length; i++) { sumX += trail[i].x; sumY += trail[i].y; }
+						var meanX = sumX / trail.length, meanY = sumY / trail.length;
+						var scale = 1.5;
+
+						ctx.beginPath();
+						for (var i = 0; i < trail.length; i++) {
+							var px = canvas.width/2 + (trail[i].x - meanX) * scale;
+							var py = canvas.height/2 + (trail[i].y - meanY) * scale;
+							if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+						}
+						ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+
+						var lastPx = canvas.width/2 + (trail[trail.length-1].x - meanX) * scale;
+						var lastPy = canvas.height/2 + (trail[trail.length-1].y - meanY) * scale;
+						ctx.beginPath(); ctx.arc(lastPx, lastPy, 4, 0, 2*Math.PI);
+						ctx.fillStyle = '#d32f2f'; ctx.fill();
+					}
+
+					if (found) {
+						status.textContent = 'Tracking OK (' + trail.length + ' frames)';
+						status.style.color = '#2e7d32';
+					} else {
+						status.textContent = 'No face detected - check lighting/position';
+						status.style.color = '#d32f2f';
+					}
+
+					_checkRAF = requestAnimationFrame(detectLoop);
+				}
+				video.onloadeddata = function() { detectLoop(); };
+				if (video.readyState >= 2) detectLoop();
+			}
+
+			// Load cascade if needed
+			if (!_checkCascade) {
+				fetch('https://raw.githubusercontent.com/nenadmarkus/pico/c2e81f9d23cc11d1a612fd21e4f9de0921a5d0d9/rnt/cascades/facefinder')
+					.then(function(r) { return r.arrayBuffer(); })
+					.then(function(buf) {
+						_checkCascade = pico.unpack_cascade(new Int8Array(buf));
+						beginAfterCascade();
+					}).catch(function() { status.textContent = 'Failed to load face detector'; status.style.color = '#d32f2f'; });
+			} else {
+				beginAfterCascade();
+			}
+
+			function beginAfterCascade() {
+				navigator.mediaDevices.getUserMedia({video: {width: 640, height: 480}}).then(function(stream) {
+					_checkStream = stream;
+					video.srcObject = stream;
+					status.textContent = 'Detecting face...';
+					status.style.color = '#666';
+					beginDetection();
+				}).catch(function(err) {
+					status.textContent = 'Camera error: ' + err.message;
+					status.style.color = '#d32f2f';
+				});
+			}
+		}
+
+		function stopCameraCheck() {
+			if (_checkRAF) { cancelAnimationFrame(_checkRAF); _checkRAF = null; }
+			if (_checkStream) { _checkStream.getTracks().forEach(function(t) { t.stop(); }); _checkStream = null; }
+			var video = document.getElementById('checkVideo');
+			if (video) video.srcObject = null;
+		}
+
 		function renderMarkdown(md) {
 			// Minimal markdown to HTML converter
 			var html = md
@@ -2089,9 +2211,17 @@
 				<button id="exportButton" onclick="loadResults()">Load Results</button>
 				<button id="exportButton" onclick="compareResults()">Compare Results</button>
 				<button id="exportButton" onclick="toggleReadme()">Documentation</button>
+				<button id="exportButton" onclick="toggleCameraCheck()">Check Camera</button>
 			</div>
 			<div id="readmeContainer" style="display:none;max-width:800px;margin:20px auto;padding:20px;background:#f9f9f9;border:1px solid #ddd;border-radius:8px;text-align:left;font-family:'Open Sans',sans-serif;font-size:14px;line-height:1.6;overflow-y:auto;max-height:70vh;">
 				<div id="readmeContent">Loading...</div>
+			</div>
+			<div id="cameraCheckContainer" style="display:none;max-width:500px;margin:20px auto;padding:15px;background:#f9f9f9;border:1px solid #ddd;border-radius:8px;text-align:center;">
+				<div style="display:flex;justify-content:center;gap:20px;align-items:flex-start;">
+					<video id="checkVideo" width="200" height="150" autoplay muted style="border-radius:4px;background:#000;"></video>
+					<canvas id="checkCanvas" width="200" height="200" style="border:1px solid #ccc;border-radius:4px;background:#fff;"></canvas>
+				</div>
+				<p id="checkStatus" style="margin:8px 0 0;font-size:12px;color:#666;">Starting camera...</p>
 			</div>
 			<div id="finalGraph" style="margin: 50px auto; width:600px;height:250px;"></div>
 	    </div>
