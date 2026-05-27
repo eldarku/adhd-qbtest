@@ -116,3 +116,12 @@ Three composite scores summarize overall performance:
 
 1. Click **Load Results** and select an exported `.txt` file to view past results
 2. Click **Compare Results** and select two `.txt` files to see a side-by-side comparison
+
+## References
+
+- QbCheck Technical Manual, Revision F. Qbtech AB, 2022.
+- Parameter Interpretation Guide (EN). Qbtech AB.
+- Hult N, Kadesjö J, Kadesjö B, Gillberg C, Billstedt E. ADHD and the QbTest: Diagnostic Validity of QbTest. Journal of Attention Disorders, 22(11), 1074–1080, 2018. DOI: 10.1177/1087054715595697
+- Nylander E, Sparding T, Floros O, Rydén E, Åsberg Johnels J, Waern M. The quantified behavioural test plus (QbTest+) in adult ADHD. Nordic Psychology, 2023. DOI: 10.1080/19012276.2022.2036628
+- Ulberstad F, Boström H, Chavanon ML, Billstedt E, Gillberg C, Melchior P. Objective measurement of attention deficit hyperactivity disorder symptoms outside the clinic using the QbCheck: Reliability and validity. International Journal of Methods in Psychiatric Research, 29(3), 2020. DOI: 10.1002/mpr.1822
+- Markus N. pico.js — a face-detection library in 200 lines of JavaScript. https://github.com/nenadmarkus/picojs
