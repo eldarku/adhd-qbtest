@@ -482,6 +482,8 @@
 			var resultsDiv = document.getElementById('results');
 			resultsDiv.style.display = 'block';
 			document.getElementById('exportBtn').style.display = '';
+			var metaDiv = document.getElementById('resultsMeta');
+			metaDiv.innerHTML = 'Test: ' + startTime.toLocaleDateString() + ' ' + startTime.toLocaleTimeString() + ' &nbsp;|&nbsp; Duration: ' + (timeLimit / 60000) + ' minutes';
 			var quarterDuration = timeLimit / 4;
 			var quarterStats = [];
 			for (var q = 0; q < 4; q++) {
@@ -1017,6 +1019,10 @@
 			// Hide comparison div if visible
 			var cmpDiv = document.getElementById('comparisonResults');
 			if (cmpDiv) cmpDiv.style.display = 'none';
+
+			// Show test metadata
+			var metaDiv = document.getElementById('resultsMeta');
+			metaDiv.innerHTML = data.testDate ? ('Test: ' + data.testDate + (data.testDuration ? ' &nbsp;|&nbsp; Duration: ' + data.testDuration : '')) : '';
 
 			// Composite Q-score bars
 			function compositeBar(label, qs, pct) {
@@ -2251,6 +2257,7 @@
 			<div class="center" style="margin-bottom:20px;">
 				<button id="exportBtn" onclick="exportResults()">Export Results</button>
 			</div>
+			<div id="resultsMeta" style="text-align:center;font-size:12px;color:#666;margin-bottom:15px;"></div>
 			<h2>Activity</h2>
 			<div id="qbActivityScore"></div>
 			<div class="quarter-row">
