@@ -1284,10 +1284,17 @@
 			div.innerHTML += '<div class="center" style="margin-top:20px"><button id="exportButton" onclick="backToStart()">Back to Start</button></div>';
 			div.innerHTML += '<p class="note">Note: Q-scores based on QbCheck Technical Manual Rev F (2022) norms, adults 20-60.</p>';
 
-			// Draw movement trajectories on canvases
+			// Draw movement trajectories on canvases (shared scale)
 			setTimeout(function() {
-				drawMovementOnCanvas('cmpMvAll1', d1.movement);
-				drawMovementOnCanvas('cmpMvAll2', d2.movement);
+				// Compute global bounds across both tests for consistent scale
+				var allMv = d1.movement.concat(d2.movement);
+				var allXs = allMv.map(function(p){return p.x;}), allYs = allMv.map(function(p){return p.y;});
+				var globalBounds = {
+					minX: Math.min.apply(null,allXs), maxX: Math.max.apply(null,allXs),
+					minY: Math.min.apply(null,allYs), maxY: Math.max.apply(null,allYs)
+				};
+				drawMovementOnCanvas('cmpMvAll1', d1.movement, globalBounds);
+				drawMovementOnCanvas('cmpMvAll2', d2.movement, globalBounds);
 				renderCmpScatter('cmpScatter1', d1);
 				renderCmpScatter('cmpScatter2', d2);
 			}, 50);
@@ -1302,7 +1309,7 @@
 				'<td>' + m1.percentile + '</td><td>' + m2.percentile + '</td></tr>';
 		}
 
-		function drawMovementOnCanvas(canvasId, movPoints) {
+		function drawMovementOnCanvas(canvasId, movPoints, sharedBounds) {
 			var c = document.getElementById(canvasId);
 			if (!c || movPoints.length < 2) return;
 			var ctx2 = c.getContext('2d');
@@ -1311,9 +1318,15 @@
 			// Crosshair
 			ctx2.beginPath(); ctx2.moveTo(0, h/2); ctx2.lineTo(w, h/2);
 			ctx2.moveTo(w/2, 0); ctx2.lineTo(w/2, h); ctx2.lineWidth = 0.5; ctx2.strokeStyle = '#ccc'; ctx2.stroke();
-			var xs = movPoints.map(function(p){return p.x;}), ys = movPoints.map(function(p){return p.y;});
-			var minX = Math.min.apply(null,xs), maxX = Math.max.apply(null,xs);
-			var minY = Math.min.apply(null,ys), maxY = Math.max.apply(null,ys);
+			var minX, maxX, minY, maxY;
+			if (sharedBounds) {
+				minX = sharedBounds.minX; maxX = sharedBounds.maxX;
+				minY = sharedBounds.minY; maxY = sharedBounds.maxY;
+			} else {
+				var xs = movPoints.map(function(p){return p.x;}), ys = movPoints.map(function(p){return p.y;});
+				minX = Math.min.apply(null,xs); maxX = Math.max.apply(null,xs);
+				minY = Math.min.apply(null,ys); maxY = Math.max.apply(null,ys);
+			}
 			var rangeX = maxX - minX || 1, rangeY = maxY - minY || 1;
 			var margin = 10;
 			ctx2.beginPath();
