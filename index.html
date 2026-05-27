@@ -195,11 +195,8 @@
 			drawMovementGraphBackground();
 			startTracking();
 			let minutesField = document.getElementById("testLengthFieldMinutes");
-			let secondsField = document.getElementById("testLengthFieldSeconds");
 			let minutes = parseInt(minutesField.value);
-			let seconds = parseInt(secondsField.value);
-						
-			timeLimit = (minutes * 60 + seconds) * 1000;
+			timeLimit = minutes * 60 * 1000;
 			if (timeLimit <= 0) {
 				return
 			}
@@ -1849,21 +1846,13 @@
 				
 			printStats();
 		}
-		function onTimeChange(e) {
-			if(isNaN(parseInt(e.value))) e.value = 0
-			else if ( parseInt(e.value) >= 60) e.value = 59
-		}
-		function onSecChange(e) {
-			onTimeChange(e);
-			localStorage.setItem('sec', e.value);
-		}
 		function onMinChange(e) {
-			onTimeChange(e);
+			var v = parseInt(e.value);
+			if (isNaN(v) || v < 1) e.value = 1;
 			localStorage.setItem('min', e.value);
 		}
 		function onPageLoad() {
-			if (localStorage.getItem('min')) document.getElementById('testLengthFieldMinutes').value=localStorage.getItem('min');
-			if (localStorage.getItem('sec')) document.getElementById('testLengthFieldSeconds').value=localStorage.getItem('sec');
+			if (localStorage.getItem('min')) document.getElementById('testLengthFieldMinutes').value = localStorage.getItem('min');
 		}
 		var tracking_initialized = false;
 		var mycamvas = undefined;
@@ -2231,8 +2220,7 @@
 	    <div id="wrapper">
 			<div id="testLengthDiv" class="center">
 				<span id="testLengthSpan"> Test length: </span> 
-				<input id="testLengthFieldMinutes" value="20" onchange="onMinChange(this)"></input> <label> minute(s) </label> 
-				<input id="testLengthFieldSeconds" value="0" onchange="onSecChange(this)"></input> <label> second(s) </label>
+				<input id="testLengthFieldMinutes" value="20" onchange="onMinChange(this)" style="width:40px"></input> <label> minutes </label>
 			</div>
 			<div id="startButtonDiv" class="center">
 				<button id="startButton" onclick="init()">Start</button>
