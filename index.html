@@ -1308,20 +1308,29 @@
 			div.innerHTML += '<div class="center" style="margin-top:20px"><button id="exportButton" onclick="backToStart()">Back to Start</button></div>';
 			div.innerHTML += '<p class="note">Note: Q-scores based on QbCheck Technical Manual Rev F (2022) norms, adults 20-60.</p>';
 
-			// Draw movement trajectories on canvases (shared scale)
+			// Draw movement trajectories on canvases (shared scale, centered independently)
 			setTimeout(function() {
-				// Compute global bounds across both tests for consistent scale
-				var globalBounds = {minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity};
-				[d1.movement, d2.movement].forEach(function(mv) {
-					for (var i = 0; i < mv.length; i++) {
-						if (mv[i].x < globalBounds.minX) globalBounds.minX = mv[i].x;
-						if (mv[i].x > globalBounds.maxX) globalBounds.maxX = mv[i].x;
-						if (mv[i].y < globalBounds.minY) globalBounds.minY = mv[i].y;
-						if (mv[i].y > globalBounds.maxY) globalBounds.maxY = mv[i].y;
-					}
-				});
-				drawMovementOnCanvas('cmpMvAll1', d1.movement, globalBounds);
-				drawMovementOnCanvas('cmpMvAll2', d2.movement, globalBounds);
+				// Compute max range across both tests for consistent scale
+				var bounds1 = {minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity};
+				var bounds2 = {minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity};
+				for (var i = 0; i < d1.movement.length; i++) {
+					if (d1.movement[i].x < bounds1.minX) bounds1.minX = d1.movement[i].x;
+					if (d1.movement[i].x > bounds1.maxX) bounds1.maxX = d1.movement[i].x;
+					if (d1.movement[i].y < bounds1.minY) bounds1.minY = d1.movement[i].y;
+					if (d1.movement[i].y > bounds1.maxY) bounds1.maxY = d1.movement[i].y;
+				}
+				for (var i = 0; i < d2.movement.length; i++) {
+					if (d2.movement[i].x < bounds2.minX) bounds2.minX = d2.movement[i].x;
+					if (d2.movement[i].x > bounds2.maxX) bounds2.maxX = d2.movement[i].x;
+					if (d2.movement[i].y < bounds2.minY) bounds2.minY = d2.movement[i].y;
+					if (d2.movement[i].y > bounds2.maxY) bounds2.maxY = d2.movement[i].y;
+				}
+				var sharedRange = {
+					rangeX: Math.max(bounds1.maxX - bounds1.minX, bounds2.maxX - bounds2.minX) || 1,
+					rangeY: Math.max(bounds1.maxY - bounds1.minY, bounds2.maxY - bounds2.minY) || 1
+				};
+				drawMovementOnCanvas('cmpMvAll1', d1.movement, sharedRange);
+				drawMovementOnCanvas('cmpMvAll2', d2.movement, sharedRange);
 				renderCmpScatter('cmpScatter1', d1);
 				renderCmpScatter('cmpScatter2', d2);
 			}, 50);
@@ -1345,25 +1354,23 @@
 			// Crosshair
 			ctx2.beginPath(); ctx2.moveTo(0, h/2); ctx2.lineTo(w, h/2);
 			ctx2.moveTo(w/2, 0); ctx2.lineTo(w/2, h); ctx2.lineWidth = 0.5; ctx2.strokeStyle = '#ccc'; ctx2.stroke();
-			var minX, maxX, minY, maxY;
-			if (sharedBounds) {
-				minX = sharedBounds.minX; maxX = sharedBounds.maxX;
-				minY = sharedBounds.minY; maxY = sharedBounds.maxY;
-			} else {
-				minX = Infinity; maxX = -Infinity; minY = Infinity; maxY = -Infinity;
-				for (var i = 0; i < movPoints.length; i++) {
-					if (movPoints[i].x < minX) minX = movPoints[i].x;
-					if (movPoints[i].x > maxX) maxX = movPoints[i].x;
-					if (movPoints[i].y < minY) minY = movPoints[i].y;
-					if (movPoints[i].y > maxY) maxY = movPoints[i].y;
-				}
+			// Compute this test's own bounds
+			var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+			for (var i = 0; i < movPoints.length; i++) {
+				if (movPoints[i].x < minX) minX = movPoints[i].x;
+				if (movPoints[i].x > maxX) maxX = movPoints[i].x;
+				if (movPoints[i].y < minY) minY = movPoints[i].y;
+				if (movPoints[i].y > maxY) maxY = movPoints[i].y;
 			}
-			var rangeX = maxX - minX || 1, rangeY = maxY - minY || 1;
+			// Use shared range for scale (if provided), but center on own data
+			var rangeX = (sharedBounds && sharedBounds.rangeX) ? sharedBounds.rangeX : (maxX - minX || 1);
+			var rangeY = (sharedBounds && sharedBounds.rangeY) ? sharedBounds.rangeY : (maxY - minY || 1);
+			var centerX = (minX + maxX) / 2, centerY = (minY + maxY) / 2;
 			var margin = 10;
 			ctx2.beginPath();
 			for (var i = 0; i < movPoints.length; i++) {
-				var px = margin + ((movPoints[i].x - minX) / rangeX) * (w - 2*margin);
-				var py = margin + ((movPoints[i].y - minY) / rangeY) * (h - 2*margin);
+				var px = w/2 + ((movPoints[i].x - centerX) / rangeX) * (w - 2*margin);
+				var py = h/2 + ((movPoints[i].y - centerY) / rangeY) * (h - 2*margin);
 				if (i === 0) ctx2.moveTo(px, py); else ctx2.lineTo(px, py);
 			}
 			ctx2.lineWidth = 0.5; ctx2.strokeStyle = 'rgba(0,0,0,0.6)'; ctx2.stroke();
