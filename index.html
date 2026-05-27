@@ -13,20 +13,23 @@
 	<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
 	<script type="text/javascript">
 		const OUTLIER_THRESHOLD = 2000;
-		// Normative values from QbCheck Technical Manual Rev F (2022), Table 4
-		// Adults 20-60, averaged across gender (QbTest 12-60 norm group, N=731)
-		// Movement metrics use pixel units (not comparable to manual's m/cm²)
+		// Normative values reverse-engineered from official QbTest results
+		// Movement metrics use LOG10 transform (log-normal distribution)
+		// Attention/Impulse metrics use linear transform
 		const NORMATIVE = {
-			movementTime: {mean: 4, sd: 5},       // Time Active %
-			distance: {mean: 3000, sd: 2000},      // pixels (manual: ~3.2m, not comparable)
-			surfaceArea: {mean: 8000, sd: 5000},   // pixels² (manual: ~7.6cm², not comparable)
-			microMovements: {mean: 1710, sd: 1106}, // MicroEvents count
-			rtVariance: {mean: 129, sd: 37},       // RT Variation ms
-			omission: {mean: 4.3, sd: 5.2},        // Omission Error %
-			reactionTime: {mean: 535, sd: 97},     // Reaction Time ms
-			normVariance: {mean: 24, sd: 6},       // Normalized Variation %
-			commission: {mean: 0.6, sd: 0.65},     // Commission Error %
-			errorRate: {mean: 1.5, sd: 1.5}        // Error Rate %
+			// Movement (log10 space): derived from official test1 (ADHD) and test2 (medicated) results
+			movementTime: {logMean: 0.433, logSd: 0.445},   // log10(%), test1:35%→2.5, test2:3%→0.1
+			distance: {logMean: 3.475, logSd: 0.219},       // log10(px), test1:9500→2.3, test2:3300→0.2
+			surfaceArea: {logMean: 2.811, logSd: 0.343},    // log10(px²), test1:3400→2.1, test2:700→0.1
+			microMovements: {logMean: 3.85, logSd: 0.271},  // log10(count), calibrated for 60fps webcam
+			// Attention (linear): reverse-engineered from official results
+			rtVariance: {mean: 128, sd: 42},       // RT Variation ms
+			omission: {mean: 0.9, sd: 7.3},        // Omission Error %
+			reactionTime: {mean: 525, sd: 112},    // Reaction Time ms
+			normVariance: {mean: 24, sd: 5.5},     // Normalized Variation %
+			// Impulse (linear)
+			commission: {mean: 0.58, sd: 0.71},    // Commission Error %
+			errorRate: {mean: 0.8, sd: 2.0}        // Error Rate %
 		};
 		function normalCDF(x) {
 			var t = 1 / (1 + 0.2316419 * Math.abs(x));
@@ -37,6 +40,15 @@
 		function computeQScore(value, norm) {
 			if (norm.sd === 0) return {qscore: 0, percentile: 50};
 			var qs = (value - norm.mean) / norm.sd;
+			qs = Math.max(-3, Math.min(3, qs));
+			var pct = Math.round(normalCDF(qs) * 100);
+			return {qscore: parseFloat(qs.toFixed(1)), percentile: pct};
+		}
+		function computeQScoreLog(value, norm) {
+			// Log10 transform for movement metrics (log-normal distribution)
+			if (value <= 0) return {qscore: -3, percentile: 0};
+			var logVal = Math.log(value) / Math.LN10;
+			var qs = (logVal - norm.logMean) / norm.logSd;
 			qs = Math.max(-3, Math.min(3, qs));
 			var pct = Math.round(normalCDF(qs) * 100);
 			return {qscore: parseFloat(qs.toFixed(1)), percentile: pct};
@@ -262,8 +274,8 @@
 				var dy = points[i].y - points[i-1].y;
 				var d = Math.sqrt(dx*dx + dy*dy);
 				totalDist += d;
-				if (d < 5) microMovements++;
-				if (d > 2) movingFrames++;
+				if (d > 0.05 && d < 0.2) microMovements++; // small movements (pico smoothed scale)
+				if (d > 0.2) movingFrames++; // noticeable movement
 			}
 			var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
 			var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
@@ -511,11 +523,11 @@
 				totalNonTargets_Q234 += quarterStats[q].nonTargetCount;
 			}
 			var overallAtt = computeAttentionStats(allCorrectRT_Q234, totalMissed_Q234, totalTargets_Q234, totalNonTargets_Q234, totalErrors_Q234);
-			// Q-scores
-			var qsMvTime = computeQScore(parseFloat(avgMvTime), NORMATIVE.movementTime);
-			var qsDist = computeQScore(q234mv.distance, NORMATIVE.distance);
-			var qsSurf = computeQScore(q234mv.surfaceArea, NORMATIVE.surfaceArea);
-			var qsMicro = computeQScore(q234mv.microMovements, NORMATIVE.microMovements);
+			// Q-scores (movement metrics use log-transform)
+			var qsMvTime = computeQScoreLog(parseFloat(avgMvTime), NORMATIVE.movementTime);
+			var qsDist = computeQScoreLog(q234mv.distance, NORMATIVE.distance);
+			var qsSurf = computeQScoreLog(q234mv.surfaceArea, NORMATIVE.surfaceArea);
+			var qsMicro = computeQScoreLog(q234mv.microMovements, NORMATIVE.microMovements);
 			var qsRTVar = computeQScore(overallAtt.reactionTimeVar, NORMATIVE.rtVariance);
 			var qsOmission = computeQScore(parseFloat(overallAtt.omissionPct), NORMATIVE.omission);
 			var qsRT = computeQScore(overallAtt.reactionTime, NORMATIVE.reactionTime);
@@ -617,17 +629,17 @@
 				var mv = quarterStats[q].movement;
 				var att = quarterStats[q].attention;
 				qScoresPerQ.push({
-					// Activity
-					movementTime: computeQScore(parseFloat(mv.movementTime), NORMATIVE.movementTime),
-					distance: computeQScore(mv.distance, NORMATIVE.distance),
-					surfaceArea: computeQScore(mv.surfaceArea, NORMATIVE.surfaceArea),
-					microMovements: computeQScore(mv.microMovements, NORMATIVE.microMovements),
-					// Attention
+					// Activity (log-transform)
+					movementTime: computeQScoreLog(parseFloat(mv.movementTime), NORMATIVE.movementTime),
+					distance: computeQScoreLog(mv.distance, NORMATIVE.distance),
+					surfaceArea: computeQScoreLog(mv.surfaceArea, NORMATIVE.surfaceArea),
+					microMovements: computeQScoreLog(mv.microMovements, NORMATIVE.microMovements),
+					// Attention (linear)
 					rtVariance: computeQScore(att.reactionTimeVar, NORMATIVE.rtVariance),
 					omission: computeQScore(parseFloat(att.omissionPct), NORMATIVE.omission),
 					reactionTime: computeQScore(att.reactionTime, NORMATIVE.reactionTime),
 					normVariance: computeQScore(parseFloat(att.normVar), NORMATIVE.normVariance),
-					// Impulse
+					// Impulse (linear)
 					commission: computeQScore(parseFloat(att.commissionPct), NORMATIVE.commission),
 					errorRate: computeQScore(parseFloat(att.errorRate), NORMATIVE.errorRate)
 				});
@@ -1563,7 +1575,6 @@
 
 						if (prevCoords) {
 							ctx2.beginPath();
-							// ctx2.arc(dets[0][1], dets[0][0], 1, 0, 2*Math.PI, false);
 							ctx2.moveTo(dets[0][1], dets[0][0])
 							ctx2.lineTo(prevCoords[1], prevCoords[0])
 							ctx2.lineWidth = 1;
