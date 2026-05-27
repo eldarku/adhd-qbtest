@@ -1115,6 +1115,23 @@
 			document.getElementById('wrapper').style.display = 'block';
 			document.getElementById('finalGraph').style.display = 'none';
 
+			// Build per-quarter stats for breakdown
+			var quarterDuration = data.timeLimit / 4;
+			var quarterStats = [];
+			for (var q = 0; q < 4; q++) {
+				var qStart = q * quarterDuration, qEnd = qStart + quarterDuration;
+				var mvPoints = data.movement.filter(function(p) { return p.rel >= qStart && p.rel < qEnd; });
+				var mvStats = computeMovementStats(mvPoints);
+				var correctQ = data.correct.filter(function(c) { return c.rel >= qStart && c.rel < qEnd; });
+				var omissionsQ = data.omissions.filter(function(o) { return o.rel >= qStart && o.rel < qEnd; });
+				var commissionsQ = data.commissions.filter(function(c) { return c.rel >= qStart && c.rel < qEnd; });
+				var eventsQ = data.events.filter(function(e) { return e.rel >= qStart && e.rel < qEnd; });
+				var targetsQ = eventsQ.filter(function(e) { return e.isTarget; }).length;
+				var nonTargetsQ = eventsQ.length - targetsQ;
+				var correctRTs = correctQ.map(function(c) { return c.rt; });
+				var attStats = computeAttentionStats(correctRTs, omissionsQ.length, targetsQ, nonTargetsQ, commissionsQ.length);
+				quarterStats.push({quarter: q + 1, movement: mvStats, movementPoints: mvPoints, attention: attStats});
+			}
 			renderPerQuarterBreakdown(quarterStats);
 		}
 
