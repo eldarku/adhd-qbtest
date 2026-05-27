@@ -1545,6 +1545,11 @@
 
 		function renderMarkdown(md) {
 			// Minimal markdown to HTML converter
+			// Handle blockquotes first (before escaping >)
+			md = md.replace(/(^>.*\n?)+/gm, function(block) {
+				var lines = block.replace(/^> ?/gm, '').trim();
+				return '\x00BQSTART\x00' + lines + '\x00BQEND\x00\n';
+			});
 			var html = md
 				.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 				.replace(/^#### (.+)$/gm, '<h4>$1</h4>')
@@ -1555,9 +1560,13 @@
 				.replace(/\*(.+?)\*/g, '<em>$1</em>')
 				.replace(/`([^`]+)`/g, '<code style="background:#e8e8e8;padding:1px 4px;border-radius:3px">$1</code>')
 				.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-				.replace(/^&gt; (.+)$/gm, '<blockquote style="border-left:3px solid #c00;padding:8px 12px;margin:8px 0;background:#fff3f3">$1</blockquote>')
 				.replace(/^- (.+)$/gm, '<li>$1</li>')
 				.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+			// Restore blockquotes
+			html = html.replace(/\x00BQSTART\x00([\s\S]*?)\x00BQEND\x00/g, function(m, content) {
+				content = content.replace(/\n\n+/g, '<br><br>');
+				return '<blockquote style="border-left:3px solid #c00;padding:12px 16px;margin:12px 0;background:#fff3f3;text-align:left">' + content + '</blockquote>';
+			});
 			// Wrap consecutive <li> in <ul>
 			html = html.replace(/(<li>.*?<\/li>\n?)+/g, function(m) { return '<ul style="padding-left:20px">' + m + '</ul>'; });
 			// Tables
