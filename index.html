@@ -1547,6 +1547,8 @@
 
 		function renderMarkdown(md) {
 			// Minimal markdown to HTML converter
+			// Normalize line endings
+			md = md.replace(/\r\n/g, '\n');
 			// Handle blockquotes first (before escaping >)
 			md = md.replace(/(^>.*\n?)+/gm, function(block) {
 				var lines = block.replace(/^> ?/gm, '').trim();
