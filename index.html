@@ -530,10 +530,16 @@
 			var q234mv = {distance: 0, surfaceArea: 0, microMovements: 0, movementTimeSum: 0, simplicitySum: 0};
 			for (var q = 1; q < 4; q++) {
 				q234mv.distance += quarterStats[q].movement.distance;
-				q234mv.surfaceArea += quarterStats[q].movement.surfaceArea;
 				q234mv.microMovements += quarterStats[q].movement.microMovements;
 				q234mv.movementTimeSum += parseFloat(quarterStats[q].movement.movementTime);
 				q234mv.simplicitySum += parseFloat(quarterStats[q].movement.movSimplicity);
+			}
+			// Surface area: single bounding box over all Q2-Q4 points
+			var q234MvPoints = [];
+			for (var q = 1; q < 4; q++) q234MvPoints = q234MvPoints.concat(quarterStats[q].movementPoints);
+			if (q234MvPoints.length > 0) {
+				var saXs = q234MvPoints.map(function(p){return p.x;}), saYs = q234MvPoints.map(function(p){return p.y;});
+				q234mv.surfaceArea = Math.round((Math.max.apply(null,saXs)-Math.min.apply(null,saXs)) * (Math.max.apply(null,saYs)-Math.min.apply(null,saYs)));
 			}
 			var avgMvTime = (q234mv.movementTimeSum / 3).toFixed(1);
 			var avgSimplicity = (q234mv.simplicitySum / 3).toFixed(1);
@@ -954,10 +960,15 @@
 			var q234mv = {distance: 0, surfaceArea: 0, microMovements: 0, movementTimeSum: 0, simplicitySum: 0};
 			for (var q = 1; q < 4; q++) {
 				q234mv.distance += quarterStats[q].movement.distance;
-				q234mv.surfaceArea += quarterStats[q].movement.surfaceArea;
 				q234mv.microMovements += quarterStats[q].movement.microMovements;
 				q234mv.movementTimeSum += parseFloat(quarterStats[q].movement.movementTime);
 				q234mv.simplicitySum += parseFloat(quarterStats[q].movement.movSimplicity);
+			}
+			// Surface area: single bounding box over all Q2-Q4 points
+			var q234MvPts = data.movement.filter(function(p) { return p.rel >= quarterDurationMs; });
+			if (q234MvPts.length > 0) {
+				var saXs = q234MvPts.map(function(p){return p.x;}), saYs = q234MvPts.map(function(p){return p.y;});
+				q234mv.surfaceArea = Math.round((Math.max.apply(null,saXs)-Math.min.apply(null,saXs)) * (Math.max.apply(null,saYs)-Math.min.apply(null,saYs)));
 			}
 			var avgMvTime = (q234mv.movementTimeSum / 3).toFixed(1);
 			var avgSimplicity = (q234mv.simplicitySum / 3).toFixed(1);
