@@ -16,7 +16,7 @@ A browser-based clone of the QBTest — a Continuous Performance Test (CPT) used
 
 ### The Test (Continuous Performance Task)
 
-Four shapes are shown one at a time in random order: red rectangle, blue rectangle, red circle, blue circle. The participant must respond (click or press spacebar) whenever the **same shape appears twice in a row**. Each stimulus appears for 300–600 ms with a 1–3 second interval between stimuli. The default test duration is 20 minutes.
+Four shapes are shown one at a time in random order: red rectangle, blue rectangle, red circle, blue circle. The participant must respond (click or press spacebar) whenever the **same shape and color appear twice in a row**. Each stimulus appears for 300–600 ms with a 1–3 second interval between stimuli. The default test duration is 20 minutes.
 
 ### Movement Tracking
 
@@ -108,7 +108,7 @@ Three composite scores summarize overall performance:
 1. Open the page and allow webcam access
 2. Set test duration (default: 20 minutes)
 3. Click **Start**
-4. Respond (click or spacebar) when the same shape appears twice in a row
+4. Respond (click or spacebar) when the same shape and color appear twice in a row
 5. Results appear automatically when the test ends
 6. Click **Export as Text** to download results and raw data
 
