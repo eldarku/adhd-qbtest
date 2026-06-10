@@ -12,6 +12,33 @@ A browser-based clone of the QBTest — a Continuous Performance Test (CPT) used
 
 **Live demo:** [https://eldarku.github.io/adhd-qbtest/](https://eldarku.github.io/adhd-qbtest/)
 
+**Repo:** [https://github.com/eldarku/adhd-qbtest](https://github.com/eldarku/adhd-qbtest)
+
+## Usage
+
+### Before Starting
+
+- Enter **full-screen mode** (F11 in most browsers) to minimize distractions
+- Close all other tabs, notifications, and applications
+- Disable system notification sounds and pop-ups
+- Sit in a quiet room with consistent lighting
+- Position yourself at a comfortable distance from the screen with the webcam facing you
+- Do not use timers, alarms, or clocks visible on screen during the test
+
+### Running the Test
+
+1. Open the page and allow webcam access
+2. Set test duration (default: 20 minutes)
+3. Click **Start**
+4. Respond (click or spacebar) when the same shape and color appear twice in a row
+5. Results appear automatically when the test ends
+6. Click **Export as Text** to download results and raw data
+
+### Loading & Comparing Saved Results
+
+1. Click **Load Results** and select an exported `.txt` file to view past results
+2. Click **Compare Results** and select two exported `.txt` files to see a side-by-side comparison
+
 ## How It Works
 
 ### The Test (Continuous Performance Task)
@@ -91,31 +118,6 @@ Three composite scores summarize overall performance:
 - **camvas.js** — webcam-to-canvas helper
 - **Plotly.js** — reaction time scatter plot
 - **Canvas 2D API** — movement visualizations, stimulus display, distance plot
-
-## Usage
-
-### Before Starting
-
-- Enter **full-screen mode** (F11 in most browsers) to minimize distractions
-- Close all other tabs, notifications, and applications
-- Disable system notification sounds and pop-ups
-- Sit in a quiet room with consistent lighting
-- Position yourself at a comfortable distance from the screen with the webcam facing you
-- Do not use timers, alarms, or clocks visible on screen during the test
-
-### Running the Test
-
-1. Open the page and allow webcam access
-2. Set test duration (default: 20 minutes)
-3. Click **Start**
-4. Respond (click or spacebar) when the same shape and color appear twice in a row
-5. Results appear automatically when the test ends
-6. Click **Export as Text** to download results and raw data
-
-### Loading & Comparing Saved Results
-
-1. Click **Load Results** and select an exported `.txt` file to view past results
-2. Click **Compare Results** and select two `.txt` files to see a side-by-side comparison
 
 ## References
 
