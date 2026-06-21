@@ -8,6 +8,12 @@
 >
 > If you suspect you have ADHD, please consult a qualified healthcare professional.
 
+> **IMPORTANT: TAKE THE TEST NORMALLY. DO NOT TRY TO "ACE" IT.**
+>
+> Complete the test the way you would normally behave. **Do not try to sit unusually still, suppress natural head movement, or optimize your behavior for a "better" result.** The point of the task is to observe your usual response style and activity patterns.
+>
+> If you intentionally force yourself to stay unnaturally still or try to game the task, the result may become **strange, misleading, and hard to interpret**.
+
 A browser-based clone of the QBTest — a Continuous Performance Test (CPT) used in ADHD assessment. It simultaneously measures **attention**, **impulsivity**, and **motor activity** in a single session using only a webcam and keyboard/mouse.
 
 **Live demo:** [https://eldarku.github.io/adhd-qbtest/](https://eldarku.github.io/adhd-qbtest/)
@@ -23,6 +29,7 @@ A browser-based clone of the QBTest — a Continuous Performance Test (CPT) used
 - Disable system notification sounds and pop-ups
 - Sit in a quiet room with consistent lighting
 - Position yourself at a comfortable distance from the screen with the webcam facing you
+- Take the test **as you normally would**. Do **not** try to sit unnaturally still or "perform well" for the camera.
 - Do not use timers, alarms, or clocks visible on screen during the test
 
 ### Running the Test
@@ -30,7 +37,7 @@ A browser-based clone of the QBTest — a Continuous Performance Test (CPT) used
 1. Open the page and allow webcam access
 2. Set test duration (default: 20 minutes)
 3. Click **Start**
-4. Respond (click or spacebar) when the same shape and color appear twice in a row
+4. Respond (click or spacebar) when the same shape and color appear twice in a row, while otherwise behaving as naturally as possible
 5. Results appear automatically when the test ends
 6. Click **Export as Text** to download results and raw data
 
