@@ -84,6 +84,7 @@
         var canvas = undefined; 
 		var ctx = undefined;
 		var movementData = [];
+		var compareFiles = [null, null];
 
 		var timeLimit = 20 * 60 * 1000;
 
@@ -174,6 +175,7 @@
 			runId++;
 			if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
 			clearVariables();
+			resetComparePicker();
 			// Hide results from previous test
 			var resultsDiv = document.getElementById('results');
 			if (resultsDiv) {
@@ -1199,6 +1201,7 @@
 
 		// ============ LOAD RESULTS ============
 		function loadResults() {
+			resetComparePicker();
 			var input = document.createElement('input');
 			input.type = 'file';
 			input.accept = '.txt';
@@ -1216,32 +1219,84 @@
 		}
 
 		// ============ COMPARE RESULTS ============
-		function compareResults() {
-			var files = [];
-			function loadFile(idx) {
-				var input = document.createElement('input');
-				input.type = 'file';
-				input.accept = '.txt';
-				input.onchange = function(e) {
-					var file = e.target.files[0];
-					if (!file) return;
-					var reader = new FileReader();
-					reader.onload = function(ev) {
-						files[idx] = {name: file.name, data: parseExportedResults(ev.target.result)};
-						if (files.length === 2 && files[0] && files[1]) {
-							renderComparison(files[0].data, files[1].data);
-						}
-					};
-					reader.readAsText(file);
-				};
-				input.click();
+		function resetComparePicker() {
+			compareFiles = [null, null];
+			var picker = document.getElementById('comparePicker');
+			var status = document.getElementById('comparePickerStatus');
+			var file1 = document.getElementById('compareFile1Label');
+			var file2 = document.getElementById('compareFile2Label');
+			var btn2 = document.getElementById('compareFile2Button');
+			if (picker) picker.style.display = 'none';
+			if (status) status.textContent = 'Select two exported .txt files to compare.';
+			if (file1) file1.textContent = 'Test 1: not selected';
+			if (file2) file2.textContent = 'Test 2: not selected';
+			if (btn2) btn2.disabled = true;
+		}
+
+		function showComparePicker(message) {
+			var picker = document.getElementById('comparePicker');
+			if (picker) picker.style.display = 'block';
+			updateComparePicker(message);
+		}
+
+		function updateComparePicker(message) {
+			var status = document.getElementById('comparePickerStatus');
+			var file1 = document.getElementById('compareFile1Label');
+			var file2 = document.getElementById('compareFile2Label');
+			var btn2 = document.getElementById('compareFile2Button');
+			if (status) {
+				status.textContent = message || (compareFiles[0] ? 'Test 1 loaded. Select Test 2 to continue.' : 'Select two exported .txt files to compare.');
 			}
-			alert('Select the FIRST test result file (Test 1)');
-			loadFile(0);
-			setTimeout(function() {
-				alert('Select the SECOND test result file (Test 2)');
-				loadFile(1);
-			}, 500);
+			if (file1) file1.textContent = 'Test 1: ' + (compareFiles[0] ? compareFiles[0].name : 'not selected');
+			if (file2) file2.textContent = 'Test 2: ' + (compareFiles[1] ? compareFiles[1].name : 'not selected');
+			if (btn2) btn2.disabled = !compareFiles[0];
+		}
+
+		function selectCompareFile(idx) {
+			if (idx === 1 && !compareFiles[0]) {
+				showComparePicker('Select Test 1 first.');
+				return;
+			}
+			var input = document.getElementById(idx === 0 ? 'compareFile1Input' : 'compareFile2Input');
+			if (!input) return;
+			showComparePicker(idx === 0 ? 'Select the first test result file.' : 'Select the second test result file.');
+			input.value = '';
+			input.click();
+		}
+
+		function handleCompareFileSelected(idx, e) {
+			var file = e.target.files[0];
+			if (!file) {
+				showComparePicker(idx === 0 ? 'Test 1 selection was cancelled.' : 'Test 2 selection was cancelled.');
+				return;
+			}
+			var reader = new FileReader();
+			reader.onload = function(ev) {
+				try {
+					compareFiles[idx] = {name: file.name, data: parseExportedResults(ev.target.result)};
+				} catch (err) {
+					showComparePicker('Could not parse ' + file.name + '. Select another exported .txt file.');
+					return;
+				}
+				if (idx === 0) {
+					compareFiles[1] = null;
+					showComparePicker('Test 1 loaded. Click "Select Test 2" to continue.');
+					return;
+				}
+				if (compareFiles[0] && compareFiles[1]) {
+					var firstData = compareFiles[0].data;
+					var secondData = compareFiles[1].data;
+					resetComparePicker();
+					renderComparison(firstData, secondData);
+				}
+			};
+			reader.readAsText(file);
+		}
+
+		function compareResults() {
+			resetComparePicker();
+			showComparePicker('Select the first test result file.');
+			selectCompareFile(0);
 		}
 
 		function renderQScoreBarDual(qs1, qs2) {
@@ -1255,6 +1310,7 @@
 		}
 
 		function renderComparison(d1, d2) {
+			resetComparePicker();
 			// Recompute Q-scores from raw data for both tests
 			recomputeFromRawData(d1);
 			recomputeFromRawData(d2);
@@ -1420,6 +1476,7 @@
 		}
 
 		function backToStart() {
+			resetComparePicker();
 			document.getElementById('comparisonResults').style.display = 'none';
 			document.getElementById('results').style.display = 'none';
 			document.getElementById('wrapper').style.display = 'block';
@@ -1859,6 +1916,11 @@
 		}
 		function onPageLoad() {
 			if (localStorage.getItem('min')) document.getElementById('testLengthFieldMinutes').value = localStorage.getItem('min');
+			var compareInput1 = document.getElementById('compareFile1Input');
+			var compareInput2 = document.getElementById('compareFile2Input');
+			if (compareInput1) compareInput1.addEventListener('change', function(e) { handleCompareFileSelected(0, e); });
+			if (compareInput2) compareInput2.addEventListener('change', function(e) { handleCompareFileSelected(1, e); });
+			resetComparePicker();
 		}
 		var tracking_initialized = false;
 		var mycamvas = undefined;
@@ -2238,6 +2300,16 @@
 				<button id="exportButton" onclick="toggleReadme()">Info</button>
 				<button id="exportButton" onclick="toggleCameraCheck()">Check Camera</button>
 			</div>
+			<div id="comparePicker" style="display:none;max-width:700px;margin:20px auto;padding:16px;background:#f9f9f9;border:1px solid #ddd;border-radius:8px;text-align:center;">
+				<div id="comparePickerStatus" style="font-weight:bold;margin-bottom:10px;">Select two exported .txt files to compare.</div>
+				<div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+					<button id="compareFile1Button" onclick="selectCompareFile(0)">Select Test 1</button>
+					<button id="compareFile2Button" onclick="selectCompareFile(1)" disabled>Select Test 2</button>
+					<button id="compareCancelButton" onclick="resetComparePicker()">Cancel</button>
+				</div>
+				<div id="compareFile1Label" class="note" style="margin-top:10px;">Test 1: not selected</div>
+				<div id="compareFile2Label" class="note">Test 2: not selected</div>
+			</div>
 			<div id="readmeContainer" style="display:none;max-width:800px;margin:20px auto;padding:20px;background:#f9f9f9;border:1px solid #ddd;border-radius:8px;text-align:left;font-family:'Open Sans',sans-serif;font-size:14px;line-height:1.6;overflow-y:auto;max-height:70vh;">
 				<div id="readmeContent">Loading...</div>
 			</div>
@@ -2321,5 +2393,7 @@
 			<p class="note">Note: Q-scores based on QbCheck Technical Manual Rev F (2022) norms, adults 20-60. Movement metrics (distance, area) use pixel units.</p>
 		</div>
 		<div id="comparisonResults" style="display:none; max-width:900px; margin:0 auto; padding:20px; font-family:'Open Sans',sans-serif;"></div>
+		<input id="compareFile1Input" type="file" accept=".txt" style="display:none;">
+		<input id="compareFile2Input" type="file" accept=".txt" style="display:none;">
   </body>
 </html>
