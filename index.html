@@ -1286,8 +1286,10 @@
 				if (compareFiles[0] && compareFiles[1]) {
 					var firstData = compareFiles[0].data;
 					var secondData = compareFiles[1].data;
+					var firstName = compareFiles[0].name;
+					var secondName = compareFiles[1].name;
 					resetComparePicker();
-					renderComparison(firstData, secondData);
+					renderComparison(firstData, secondData, firstName, secondName);
 				}
 			};
 			reader.readAsText(file);
@@ -1297,6 +1299,15 @@
 			resetComparePicker();
 			showComparePicker('Select the first test result file.');
 			selectCompareFile(0);
+		}
+
+		function escapeHtml(value) {
+			return String(value)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;');
 		}
 
 		function renderQScoreBarDual(qs1, qs2) {
@@ -1309,7 +1320,7 @@
 				'<div class="qscore-marker qscore-marker-t2" style="left:' + pct2 + '%"></div></div>';
 		}
 
-		function renderComparison(d1, d2) {
+		function renderComparison(d1, d2, name1, name2) {
 			resetComparePicker();
 			// Recompute Q-scores from raw data for both tests
 			recomputeFromRawData(d1);
@@ -1327,9 +1338,11 @@
 			div.innerHTML = '';
 
 			// Header
+			var fileLabel1 = name1 ? ' &nbsp;|&nbsp; ' + escapeHtml(name1) : '';
+			var fileLabel2 = name2 ? ' &nbsp;|&nbsp; ' + escapeHtml(name2) : '';
 			div.innerHTML += '<div style="text-align:center;margin-bottom:5px;font-size:12px;color:#666">' +
-				'<span style="margin-right:20px">&#9670; Test 1: ' + d1.testDate + '</span>' +
-				'<span>&#9671; Test 2: ' + d2.testDate + '</span></div>';
+				'<span style="margin-right:20px">&#9670; Test 1: ' + d1.testDate + fileLabel1 + '</span>' +
+				'<span>&#9671; Test 2: ' + d2.testDate + fileLabel2 + '</span></div>';
 
 			// === ACTIVITY SECTION ===
 			div.innerHTML += '<h2>Activity</h2>';
